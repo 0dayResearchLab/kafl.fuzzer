@@ -529,8 +529,7 @@ class qemu:
         #if len(payload) > self.payload_limit:
         #    payload = payload[:self.payload_limit]
         try:
-            struct.pack_into("=I", self.fs_shm, 0, len(payload))
-            self.fs_shm.seek(4)
+            self.fs_shm.seek(0)
             self.fs_shm.write(payload)
             #self.fs_shm.flush()
         except ValueError:

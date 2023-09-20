@@ -1,2 +1,30 @@
 1. git push할 때 에러나는 것
 -> Github Key에서 workflow에 권한있는 키를 새로 만들어주기
+
+2. kafl_fuzzer/common/util.py
+-> Add sleep to purge
+-> Add u32, p32
+-> Add Constant for IRP/Mutation
+-> define IRP Class and IRP Parser
+
+3. kafl_fuzzer/technique/*
+-> ws many change
+
+
+4. kafl_fuzzer/work/qemu.py, state_logic.py, worker.py
+
+- qemu.py
+seek(0) and write(payload)
+
+- state_logic.py
+-> ws many change
+
+- worker.py
+-> remove grimore
+-> fix handle_busy
+
+5. fix up harness
+-> do not persistent
+
+6. run.sh
+kafl fuzz -w ./work --seed-dir ./seed --redqueen -p 4 --t-soft 255 --purge

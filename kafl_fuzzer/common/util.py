@@ -17,6 +17,101 @@ import kafl_fuzzer.common.color as color
 
 logger = logging.getLogger(__name__)
 
+import struct
+import json
+def u32(x, debug=None):
+    try: 
+        return struct.unpack('<L',x)[0]
+    except:
+        print(x)
+        print(debug)
+        exit(0)
+    
+def p32(x): return struct.pack('<I', x)
+
+COMMAND = 4
+IOCTL_CODE = 8
+INBUFFER_LENGTH = 12
+OUTBUFFER_LENGTH = 16
+
+AFL_HAVOC_MIN = 256
+MAX_BUFFER_LEN = 0x2000
+MAX_BUFFER_LEN_HAVOC = 0x2000
+
+
+
+
+MAX_WALKING_BITS_SIZE = 0x400
+MAX_ARITHMETIC_SIZE = 0x400
+MAX_INTERESTING_SIZE = 0x400
+MAX_RAND_VALUES_SIZE = 0x400
+
+MAX_RANGE_VALUE = 0xffffffff
+
+
+class IRP:
+    def __init__(self, IoControlCode=0, InBuffer_length=0, OutBuffer_Length=0, InBuffer=b'', Command=0):
+        self.IoControlCode = u32(IoControlCode)
+        self.InBuffer_length = u32(InBuffer_length)
+        self.OutBuffer_Length = u32(OutBuffer_Length)
+        if InBuffer == b'':
+            self.InBuffer = bytearray( b"\xff" * self.InBuffer_length)
+        else:
+            self.InBuffer = bytearray(InBuffer)
+        
+        self.Command = Command
+
+def add_to_irp_list(target_list, data):
+
+    if len(target_list)>0:
+        target_list.clear()
+    start =0 
+
+    while len(data) > start:
+        command = data[start: start + COMMAND]
+        ioctl_code = data[start + COMMAND: start + IOCTL_CODE]
+        inbuffer_length = data[start + IOCTL_CODE: start + INBUFFER_LENGTH]
+        outbuffer_length = data[start + INBUFFER_LENGTH: start + OUTBUFFER_LENGTH]
+        payload = data[start+OUTBUFFER_LENGTH:start+OUTBUFFER_LENGTH + u32(inbuffer_length,debug=data)]
+
+        start = start +u32(inbuffer_length) + OUTBUFFER_LENGTH
+        target_list.append(IRP(ioctl_code, inbuffer_length, outbuffer_length, payload,command))
+    
+def serialize(target_list):
+    result = b""
+
+    try:
+
+        for index in range(len(target_list)):
+            cur = target_list[index]
+            result += cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_Length)  + cur.InBuffer
+        return result
+    except AttributeError:
+        print(f"Attribute Erorr :::::::::::::::::::: {cur} {target_list}")
+        exit(0)
+irp_list = []
+
+def parse_payload(cur):
+    return cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_Length), cur.InBuffer
+
+
+def parse_all(data):
+    start =0 
+
+    sequence = []
+    while len(data) > start:
+        command = data[start: start + COMMAND]
+        ioctl_code = data[start + COMMAND: start + IOCTL_CODE]
+        inbuffer_length = data[start + IOCTL_CODE: start + INBUFFER_LENGTH]
+        outbuffer_length = data[start + INBUFFER_LENGTH: start + OUTBUFFER_LENGTH]
+        payload = data[start+OUTBUFFER_LENGTH:start+OUTBUFFER_LENGTH + u32(inbuffer_length)]
+
+        start = start +u32(inbuffer_length) + OUTBUFFER_LENGTH
+
+        sequence.append(IRP(ioctl_code, inbuffer_length, outbuffer_length, payload,command))
+    return sequence
+
+
 class Singleton(type):
     _instances = {}
 
@@ -86,7 +181,7 @@ def find_diffs(data_a, data_b):
     first_diff = 0
     last_diff = 0
     for i in range(min(len(data_a), len(data_b))):
-        if data_a[i] != data_b:
+        if data_a[i] != data_b[i]:
             if first_diff == 0:
                 first_diff = i
             last_diff = i
@@ -108,7 +203,10 @@ def prepare_working_dir(config):
         return False
 
     if purge:
+        print("[purge] removing old dirs")
         shutil.rmtree(workdir, ignore_errors=True)
+        import time
+        time.sleep(2)
 
     try:
         for folder in folders:

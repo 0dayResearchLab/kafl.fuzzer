@@ -80,10 +80,6 @@ def start(settings: LazySettings):
         logger.warn("Warning: Launching without --seed-dir?")
         time.sleep(1)
 
-    # Without -ip0, Qemu will not active PT tracing and we turn into a blind fuzzer
-    if not settings.ip0:
-        logger.warn("No PT trace region defined.")
-
     avail, used = filter_available_cpus()
     if num_worker > len(avail):
         logger.error(f"Requested {num_worker} workers but only {len(avail)} vCPUs detected.")

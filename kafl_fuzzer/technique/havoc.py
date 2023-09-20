@@ -8,7 +8,7 @@ AFL-style havoc and splicing stage
 """
 
 import glob
-
+from kafl_fuzzer.common.util import parse_all, parse_payload, read_binary_file
 from kafl_fuzzer.common.rand import rand
 from kafl_fuzzer.technique.havoc_handler import *
 
@@ -47,31 +47,76 @@ def havoc_range(perf_score):
     return max_iterations
 
 
-def mutate_seq_havoc_array(data, func, max_iterations, resize=False):
-    if resize:
-        data = data + data
-    else:
-        data = data
+def mutate_seq_havoc_array(irp_list, index, func, max_iterations, resize=False):
+    # if resize:
+    #     data = data + data
+    # else:
+    #     data = data
+    data = irp_list[index].InBuffer
+    InBufferLength = irp_list[index].InBuffer_length
 
     stacking = rand.int(AFL_HAVOC_STACK_POW2)
     stacking = 1 << (stacking)
+
     for _ in range(1+max_iterations//stacking):
         for _ in range(stacking):
             handler = rand.select(havoc_handler)
-            data = handler(data)[:KAFL_MAX_FILE]
-            func(data)
+            data = handler(data)
+            
+            if len(data) >= InBufferLength:
+                data = data[:InBufferLength]
+            else:
+                data = data.ljust(InBufferLength,b"\xff") #TO DO -> make random bytes
+            
+            irp_list[index].InBuffer = data
 
-def mutate_seq_splice_array(data, func, max_iterations, resize=False):
+            func(irp_list)
+
+
+def mutate_seq_splice_array(irp_list, index, func, max_iterations, resize=False):
     global location_corpus
     havoc_rounds = 4
     splice_rounds = max_iterations//havoc_rounds
     files = glob.glob(location_corpus + "/regular/payload_*")
+    
+    target = irp_list[index]
+    #print("mutate_seq_splice_array")
+    header, data = parse_payload(target)
     for _ in range(splice_rounds):
         spliced_data = havoc_splicing(data, files)
         if spliced_data is None:
             return # could not find any suitable splice pair for this file
-        func(spliced_data)
-        mutate_seq_havoc_array(spliced_data,
+        spliced_data = spliced_data[:target.InBuffer_length]
+        target.InBuffer = spliced_data
+        func(irp_list)
+        mutate_seq_havoc_array(irp_list,
+                               index,
                                func,
                                havoc_rounds,
                                resize=resize)
+
+def mutate_random_sequence(irp_list, index, func):
+    files = glob.glob(location_corpus + "/regular/payload_*")
+
+
+    rand.shuffle(files)
+    retry = 10
+    new_irp_list = []    
+    for _ in range(retry):
+        #for i in range(rand.int(len(files))):
+
+        if len(files) > 4:
+            limit = 4
+        else:
+            limit = len(files)
+
+        for i in range(limit):
+            target = read_binary_file(files[i])
+
+            appended_target_list = parse_all(target)
+            for j in range(len(appended_target_list)):
+                new_irp_list.append(appended_target_list[j])
+
+
+        func(new_irp_list)
+        new_irp_list.clear()

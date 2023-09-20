@@ -69,15 +69,9 @@ class WorkerTask:
 
     def handle_busy(self):
         busy_timeout = 4
-        kickstart = self.config.kickstart
-
-        if kickstart:
-            self.logger.debug("No inputs in queue, attempting kickstart(%d)..", kickstart)
-            self.q.set_timeout(self.t_hard)
-            self.logic.process_kickstart(kickstart)
-        else:
-            self.logger.info("No inputs in queue, sleeping %ds..", busy_timeout)
-            time.sleep(busy_timeout)
+    
+        self.logger.info("No inputs in queue, sleeping %ds..", busy_timeout)
+        time.sleep(busy_timeout)
         self.conn.send_ready()
 
     def handle_node(self, msg):
@@ -406,6 +400,7 @@ class WorkerTask:
 
         # restart Qemu on crash
         if crash:
+            print(f"CCCCCCCCRRRRRRRRRRRAAAAAASSSSSSSSSSSSSSHHHHHHHHHH : {data}")
             self.statistics.event_reload(exec_res.exit_reason)
             self.q.reload()
 
