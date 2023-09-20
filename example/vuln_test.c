@@ -10,6 +10,20 @@
 #define INFO_SIZE                       (128 << 10)				/* 128KB info string */
  
 #define PAYLOAD_MAX_SIZE (128*1024)
+
+#define IOCTL 0x4f494f49 // 'IOIO'
+#define WRITE 0x52575257 // 'WRITE'
+#define RELOAD 0x45524552 // 'RERE'
+typedef unsigned int uint32_t;
+
+typedef struct __attribute__((__packed__)){
+	uint32_t function_code;
+	uint32_t IoControlCode;
+	uint32_t InBufferLength;
+	uint32_t OutBufferLength;
+	uint32_t resume;
+	uint8_t InBuffer[PAYLOAD_MAX_SIZE-sizeof(uint32_t)*5];
+} kAFL_custom;
  
 #define DEVICE_NAME         L"\\DosDevices\\TARGETDRIVER"
 #define IOCTL_KAFL_INPUT    (ULONG) CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_NEITHER, FILE_ANY_ACCESS)
@@ -264,18 +278,18 @@ int main(int argc, char** argv)
 		    if(function_code == IOCTL)
 		    {
 
-                DeviceIoControl(kafl_vuln_handle,
-                    IoControlCode,
-                    (LPVOID)inbuffer,
-                    (DWORD)InBufferLength,
-                    &outbuff,
-                    (DWORD)OutBufferLength,
-                    &dwRet,
-                    NULL
+			DeviceIoControl(kafl_vuln_handle,
+				IoControlCode,
+				(LPVOID)inbuffer,
+				(DWORD)InBufferLength,
+				  &outbuff,
+				(DWORD)OutBufferLength,
+				&dwRet,
+				NULL
 
-                    );
-                if(!dwRet)
-                    hprintf("dwRet is %d\n",dwRet);
+			    );
+			//if(dwRet)
+			//	hprintf("Your genius? %d\n",dwRet);
 		    }
 		    header = inbuffer + InBufferLength;
 
@@ -305,4 +319,3 @@ int main(int argc, char** argv)
  
     return 0;
 }
-

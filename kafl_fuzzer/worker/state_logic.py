@@ -262,7 +262,7 @@ class FuzzingStateLogic:
                     self.__perform_havoc(irp_list, index, metadata, use_splicing=True)
                     self.splice_time += time.time() - splice_start_time
 
-            for index in range(len(irp_list)):
+            for index in range(10):
                 if havoc_dependency:
                     self.__perform_havoc(irp_list, index, metadata, dependency_stage=True)
 

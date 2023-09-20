@@ -23,8 +23,7 @@ def u32(x, debug=None):
     try: 
         return struct.unpack('<L',x)[0]
     except:
-        print(x)
-        print(debug)
+        print(f"u32 error {x} {debug}")
         exit(0)
     
 def p32(x): return struct.pack('<I', x)

@@ -400,7 +400,6 @@ class WorkerTask:
 
         # restart Qemu on crash
         if crash:
-            print(f"CCCCCCCCRRRRRRRRRRRAAAAAASSSSSSSSSSSSSSHHHHHHHHHH : {data}")
             self.statistics.event_reload(exec_res.exit_reason)
             self.q.reload()
 
