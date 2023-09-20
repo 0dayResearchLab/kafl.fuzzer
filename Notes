@@ -28,3 +28,9 @@ seek(0) and write(payload)
 
 6. run.sh
 kafl fuzz -w ./work --seed-dir ./seed --redqueen -p 4 --t-soft 255 --purge
+
+7. To DO
+TO DO
+1. redqueen넣기
+-> redqueen넣기 성공하면 dependency섞는거 활성화해서 테스트 해보기 
+2. Corpus minimization

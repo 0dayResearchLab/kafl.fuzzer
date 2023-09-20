@@ -77,6 +77,8 @@ def add_args_general(parser):
                         action='store_true', default=False)
     parser.add_argument('--debug', help='enable extra debug checks and max logging verbosity',
                         action='store_true', default=False)
+    parser.add_argument('-i', '--interface', required=False, metavar='<file>', default=False,
+                        help='enable interfacing')
 
 # kAFL/Fuzzer-specific options
 def add_args_fuzzer(parser):

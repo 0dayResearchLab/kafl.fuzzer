@@ -25,7 +25,7 @@ from dynaconf import LazySettings
 
 from kafl_fuzzer.common.util import print_banner
 from kafl_fuzzer.common.self_check import self_check, post_self_check
-from kafl_fuzzer.common.util import prepare_working_dir, copy_seed_files, qemu_sweep, filter_available_cpus
+from kafl_fuzzer.common.util import prepare_working_dir, copy_seed_files, qemu_sweep, filter_available_cpus, interface_manager
 from kafl_fuzzer.common.logger import add_logging_file
 from kafl_fuzzer.manager.manager import ManagerTask
 from kafl_fuzzer.worker.worker import worker_loader
@@ -59,6 +59,7 @@ def start(settings: LazySettings):
     workdir   = settings.workdir
     seed_dir   = settings.seed_dir
     num_worker = settings.processes
+    interface = settings.interface
 
     if not post_self_check(settings):
         logger.error("Startup checks failed. Exit.")
@@ -67,6 +68,11 @@ def start(settings: LazySettings):
     if not prepare_working_dir(settings):
         logger.error("Failed to prepare working directory. Exit.")
         return -1;
+
+
+    if interface:
+        interface_manager.load(interface)
+        interface_manager.generate(seed_dir)
 
     # initialize logger after workdir purge
     # otherwise the file handler created is removed

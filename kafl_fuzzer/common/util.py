@@ -111,6 +111,80 @@ def parse_all(data):
     return sequence
 
 
+
+
+
+
+
+def to_range(rg):
+    start, end = rg.split('-')
+    return range(int(start), int(end) + 1 if end != 'inf' else MAX_RANGE_VALUE)
+
+
+class Interface:
+    def __init__(self):
+        self.interface = {}
+
+    def __getitem__(self, key):
+        return self.interface[key]
+
+    def load(self, path):
+        interface_json = json.loads(open(path, 'r').read())
+        for constraint in interface_json:
+            iocode = int(constraint["IoControlCode"], 16)
+            inbuffer_ranges = list(map(to_range, constraint["InBufferLength"]))
+            outbuffer_ranges = list(map(to_range, constraint["OutBufferLength"]))
+
+            self.interface[iocode] = {"InBufferRange": inbuffer_ranges, "OutBufferRange": outbuffer_ranges}
+            if len(inbuffer_ranges) == 1 and len(inbuffer_ranges[0]) == 1:
+                self.interface[iocode]["InBufferLength"] = inbuffer_ranges[0][0]
+            if len(outbuffer_ranges) == 1 and len(outbuffer_ranges[0]) == 1:
+                self.interface[iocode]["OutBufferLength"] = outbuffer_ranges[0][0]
+
+
+    def __generateIRP(self, iocode):
+        inbuffer_ranges = interface_manager[iocode]["InBufferRange"]
+        outbuffer_ranges = interface_manager[iocode]["OutBufferRange"]
+
+        inlength = 0
+        outlength = 0
+        for rg in inbuffer_ranges:
+            inlength = max(inlength, rg.stop - 1)
+        for rg in outbuffer_ranges:
+            outlength = max(outlength, rg.stop - 1)
+
+        inlength = inlength if inlength != MAX_RANGE_VALUE-1 else MAX_BUFFER_LEN
+        outlength = outlength if outlength != MAX_RANGE_VALUE-1 else MAX_BUFFER_LEN
+        
+        irp = IRP(p32(iocode), p32(inlength), p32(outlength),Command=b"IOIO")
+
+        return irp.Command + p32(irp.IoControlCode) + p32(irp.InBuffer_length) + p32(irp.OutBuffer_Length) + irp.InBuffer
+    
+    
+    def generate(self, seed_dir):
+       
+        import mmh3
+        def hash(x): mmh3.hash(x, signed=False)
+        for iocode in interface_manager.get_all_codes():
+            payload = self.__generateIRP(iocode)
+            with open(seed_dir+f"/{hex(iocode)}_{str(hash(payload))}","wb") as file:
+                file.write(payload)
+    
+    def get_all_codes(self):
+        return self.interface.keys()
+
+
+interface_manager = Interface()
+
+
+
+
+
+
+
+
+
+
 class Singleton(type):
     _instances = {}
 
