@@ -21,7 +21,7 @@ import lz4.frame as lz4
 
 #from kafl_fuzzer.common.config import FuzzerConfiguration
 from kafl_fuzzer.common.rand import rand
-from kafl_fuzzer.common.util import atomic_write, serialize_sangjun
+from kafl_fuzzer.common.util import atomic_write, serialize_sangjun, add_to_irp_list, serialize
 from kafl_fuzzer.manager.bitmap import BitmapStorage, GlobalBitmap
 from kafl_fuzzer.manager.communicator import ClientConnection, MSG_IMPORT, MSG_RUN_NODE, MSG_BUSY
 from kafl_fuzzer.manager.node import QueueNode
@@ -31,6 +31,8 @@ from kafl_fuzzer.worker.qemu import QemuIOException
 from kafl_fuzzer.worker.qemu import qemu as Qemu
 from kafl_fuzzer.common.logger import WorkerLogAdapter
 
+
+import copy
 def worker_loader(pid, config):
     worker = WorkerTask(pid, config)
     worker.start()
@@ -160,6 +162,33 @@ class WorkerTask:
                 self.handle_busy()
             else:
                 raise ValueError("Unknown message type {}".format(msg))
+
+    def quick_crash_diet(self,data, old_res):
+        payload_list = []
+        add_to_irp_list(payload_list, data)
+
+        valid_array = [ False for i in range(len(payload_list))]
+
+
+        for i in range(len(valid_array)):
+            tmp_list = copy.deepcopy(payload_list)
+            tmp_list.pop(i)
+            payload = serialize(tmp_list)
+            exec_res = self.__execute(payload)
+
+            if exec_res.is_crash():
+                valid_array[i] = False
+            else:
+                valid_array[i] = True
+
+        refined_list = []
+        for i in range(len(payload_list)):
+            if valid_array[i]:
+                refined_list.append(payload_list[i])
+
+        
+        return serialize(refined_list)
+
 
     def quick_validate(self, data, old_res, trace=False):
         # Validate in persistent mode. Faster but problematic for very funky targets
@@ -402,8 +431,15 @@ class WorkerTask:
             if crash and self.config.log_crashes:
                 self.q.store_crashlogs(exec_res.exit_reason, exec_res.hash())
 
-            if crash or stable:
+            if stable:
                 self.__send_to_manager(data, exec_res, info)
+            elif crash:
+                refined_data = self.quick_crash_diet(data, exec_res)
+                self.__send_to_manager(refined_data, exec_res, info)
+                # else:
+                #     self.__send_to_manager(data, exec_res, info)
+            else:
+                assert(0==1),print("This region never executed")
 
         # restart Qemu on crash
         if crash:
