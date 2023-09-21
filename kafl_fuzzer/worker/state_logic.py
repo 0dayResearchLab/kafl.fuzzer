@@ -237,8 +237,8 @@ class FuzzingStateLogic:
             # TODO: AFL only has deterministic dict stage for manual dictionary.
             # However RQ dict and auto-dict actually grow over time. Perhaps
             # create multiple dicts over time and store progress in metadata?
-            # if havoc_redqueen:
-            #     self.__perform_rq_dict(payload, metadata)
+            if havoc_redqueen:
+                self.__perform_rq_dict(metadata)
 
             # if havoc_grimoire:
             #     grimoire_start_time = time.time()
@@ -337,7 +337,7 @@ class FuzzingStateLogic:
 
     def __perform_redqueen(self, metadata):
         self.stage_update_label("redq_color")
-
+        global irp_list
 
         headers, datas = parse_header_and_data(irp_list)
         orig_hash = self.__get_bitmap_hash_robust(headers, datas)
@@ -471,11 +471,14 @@ class FuzzingStateLogic:
         
         return False, det_info
 
-    def __perform_rq_dict(self, payload_array, metadata):
+    def __perform_rq_dict(self, metadata):
         rq_dict = havoc.get_redqueen_dict()
         counter = 0
         seen_addr_to_value = havoc.get_redqueen_seen_addr_to_value()
-        if len(payload_array) < 256:
+
+        headers, datas = parse_header_and_data(irp_list)
+        datas = bytearray(datas)
+        if len(datas) < 256:
             for addr in rq_dict:
                 for repl in rq_dict[addr]:
                     if addr in seen_addr_to_value and (
@@ -483,13 +486,14 @@ class FuzzingStateLogic:
                         continue
                     if not addr in seen_addr_to_value:
                         seen_addr_to_value[addr] = set()
+       
                     seen_addr_to_value[addr].add(repl)
                     self.logger.debug("RQ-Dict: attempting %s ", repr(repl))
                     for apply_dict in [havoc.dict_insert_sequence, havoc.dict_replace_sequence]:
-                        for i in range(len(payload_array)-len(repl)):
+                        for i in range(len(datas)-len(repl)):
                             counter += 1
-                            mutated = apply_dict(payload_array, repl, i)
-                            self.execute(mutated, label="redq_dict")
+                            mutated = apply_dict(datas, repl, i)
+                            self.execute_sangjun(headers, mutated, label="redq_dict")
         self.logger.debug("RedQ-Dict: Have performed %d iters", counter)
 
 

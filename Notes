@@ -29,8 +29,10 @@ seek(0) and write(payload)
 6. run.sh
 kafl fuzz -w ./work --seed-dir ./seed --redqueen -p 4 --t-soft 255 --purge
 
-7. To DO
-TO DO
-1. redqueen넣기
--> redqueen넣기 성공하면 dependency섞는거 활성화해서 테스트 해보기 
-2. Corpus minimization
+
+7. Add Redqueen
+-> Header와 Data부분을 따로 분리해두고 Data부분만 redqueen수행한 다음 self.execute()하기 전에 merge후 실행함
+
+8.TO DO
+- redqueen넣기 성공하면 dependency섞는거 활성화해서 테스트 해보기 
+- Corpus minimization
