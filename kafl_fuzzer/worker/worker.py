@@ -21,7 +21,7 @@ import lz4.frame as lz4
 
 #from kafl_fuzzer.common.config import FuzzerConfiguration
 from kafl_fuzzer.common.rand import rand
-from kafl_fuzzer.common.util import atomic_write
+from kafl_fuzzer.common.util import atomic_write, serialize_sangjun
 from kafl_fuzzer.manager.bitmap import BitmapStorage, GlobalBitmap
 from kafl_fuzzer.manager.communicator import ClientConnection, MSG_IMPORT, MSG_RUN_NODE, MSG_BUSY
 from kafl_fuzzer.manager.node import QueueNode
@@ -227,12 +227,12 @@ class WorkerTask:
         old_bits = old_node["new_bytes"].copy()
         return GlobalBitmap.all_new_bits_still_set(old_bits, new_bitmap)
 
-    def execute_redqueen(self, data):
+    def execute_redqueen(self, headers, data):
         # execute in trace mode, then restore settings
         # setting a timeout seems to interfere with tracing
         self.statistics.event_exec_redqueen()
         self.q.qemu_aux_buffer.set_redqueen_mode(True)
-        exec_res = self.execute_naked(data, timeout=0)
+        exec_res = self.execute_naked(headers, data, timeout=0)
         self.q.qemu_aux_buffer.set_redqueen_mode(False)
         return exec_res
 
@@ -292,16 +292,16 @@ class WorkerTask:
 
         return exec_res
 
-    def execute_naked(self, data, timeout=None):
+    def execute_naked(self, headers, datas, timeout=None):
 
-        if len(data) > self.payload_limit:
-            data = data[:self.payload_limit]
+        if len(datas) > self.payload_limit:
+            datas = datas[:self.payload_limit]
 
         if timeout:
             old_timeout = self.q.get_timeout()
             self.q.set_timeout(timeout)
-
-        exec_res = self.__execute(data)
+        payload = serialize_sangjun(headers, datas)
+        exec_res = self.__execute(payload)
 
         if timeout:
             self.q.set_timeout(old_timeout)

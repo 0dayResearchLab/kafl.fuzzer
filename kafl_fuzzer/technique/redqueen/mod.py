@@ -65,17 +65,17 @@ class RedqueenInfoGatherer:
                 for rhs in self.rq_offsets_to_lhs_to_rhs_to_info[offsets][lhs]:
                     yield (offsets, lhs, rhs, self.rq_offsets_to_lhs_to_rhs_to_info[offsets][lhs][rhs])
 
-    def run_mutate_redqueen(self, payload_array, func):
+    def run_mutate_redqueen(self, headers, payload_array, func):
         for (offset, lhs, rhs, info) in self.enumerate_mutations():
             #logger.debug("redqueen fuzz data %s" % repr((offset, lhs, rhs, info)))
 
-            def run(data):
+            def run(headers, data):
                 extra_info = {"redqueen": [repr(lhs), repr(rhs)] + list(info.infos)}
-                func(data, None, extra_info)
+                func(headers, data, None, extra_info)
 
             assert isinstance(payload_array, bytearray), print(
                     "fuzz_data:", type(payload_array), type(lhs[0]), type(rhs[0]))
-            RedqueenInfoGatherer.fuzz_data(payload_array, run, offset, lhs, rhs)
+            RedqueenInfoGatherer.fuzz_data(headers, payload_array, run, offset, lhs, rhs)
 
     def get_num_mutations(self):
         return self.num_mutations
@@ -86,7 +86,7 @@ class RedqueenInfoGatherer:
             data[offset + o] = repl[o]
 
     @staticmethod
-    def fuzz_data_same_len(data, func, offset_tuple, repl_tuple):
+    def fuzz_data_same_len(headers, data, func, offset_tuple, repl_tuple):
         backup = {}
         for i, repl in zip(offset_tuple, repl_tuple):
             for j in range(i, i + len(repl)):
@@ -97,12 +97,12 @@ class RedqueenInfoGatherer:
             if isinstance(repl, str):
                 repl = repl.encode()
             RedqueenInfoGatherer.replace_data(data, i, repl)
-        func(data)
+        func(headers, data)
         for i in backup:
             data[i] = backup[i]
 
     @staticmethod
-    def fuzz_data_different_len(data, func, offset_tuple, pat_length_tuple, repl_tuple):
+    def fuzz_data_different_len(headers, data, func, offset_tuple, pat_length_tuple, repl_tuple):
         res_str = b''
         last_offset = 0
         for i, orig_length, repl in zip(sorted(offset_tuple), pat_length_tuple, repl_tuple):
@@ -113,12 +113,12 @@ class RedqueenInfoGatherer:
             res_str += repl
             last_offset = i + orig_length
         res_str += data[last_offset:]
-        func(res_str)
+        func(headers, res_str)
 
     @staticmethod
-    def fuzz_data(data, func, offset_tuple, pat_tuple, repl_tuple):
+    def fuzz_data(headers, data, func, offset_tuple, pat_tuple, repl_tuple):
         pat_len_tuple = list(map(len, pat_tuple))
         if pat_len_tuple != list(map(len, repl_tuple)):
-            RedqueenInfoGatherer.fuzz_data_different_len(data, func, offset_tuple, pat_len_tuple, repl_tuple)
+            RedqueenInfoGatherer.fuzz_data_different_len(headers, data, func, offset_tuple, pat_len_tuple, repl_tuple)
         else:
-            RedqueenInfoGatherer.fuzz_data_same_len(data, func, offset_tuple, repl_tuple)
+            RedqueenInfoGatherer.fuzz_data_same_len(headers, data, func, offset_tuple, repl_tuple)

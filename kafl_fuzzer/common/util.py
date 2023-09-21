@@ -50,6 +50,7 @@ MAX_RANGE_VALUE = 0xffffffff
 
 class IRP:
     def __init__(self, IoControlCode=0, InBuffer_length=0, OutBuffer_Length=0, InBuffer=b'', Command=0):
+        self.Command = Command
         self.IoControlCode = u32(IoControlCode)
         self.InBuffer_length = u32(InBuffer_length)
         self.OutBuffer_Length = u32(OutBuffer_Length)
@@ -58,7 +59,7 @@ class IRP:
         else:
             self.InBuffer = bytearray(InBuffer)
         
-        self.Command = Command
+        
 
 def add_to_irp_list(target_list, data):
 
@@ -88,6 +89,35 @@ def serialize(target_list):
     except AttributeError:
         print(f"Attribute Erorr :::::::::::::::::::: {cur} {target_list}")
         exit(0)
+
+def serialize_sangjun(headers, datas):
+    result = b""
+
+    header_start = 0
+    data_start = 0
+    while len(headers) > header_start:
+        command = headers[header_start: header_start + COMMAND]
+        ioctl_code = headers[header_start + COMMAND: header_start + IOCTL_CODE]
+        inbuffer_length = headers[header_start + IOCTL_CODE: header_start + INBUFFER_LENGTH]
+        outbuffer_length = headers[header_start + INBUFFER_LENGTH: header_start + OUTBUFFER_LENGTH]
+        payload = datas[data_start: data_start + u32(inbuffer_length)]
+
+        header_start += OUTBUFFER_LENGTH
+        data_start += u32(inbuffer_length)
+        result+=command + ioctl_code + inbuffer_length + outbuffer_length + payload
+
+    return result
+    # try:
+
+    #     for index in range(len(target_list)):
+    #         cur = target_list[index]
+    #         result += cur.Command + cur.IoControlCode + cur.InBuffer_length + cur.OutBuffer_Length  + cur.InBuffer
+    #     return result
+    # except AttributeError:
+    #     print(f"Attribute Erorr :::::::::::::::::::: {cur} {target_list}")
+    #     exit(0)
+
+
 irp_list = []
 
 def parse_payload(cur):
@@ -109,6 +139,36 @@ def parse_all(data):
 
         sequence.append(IRP(ioctl_code, inbuffer_length, outbuffer_length, payload,command))
     return sequence
+
+
+def parse_header_and_data(target_list):
+    start =0 
+
+
+    
+    headers = b''
+    datas = b''
+    for index in range(len(target_list)):
+
+        def steam_header_data(cur):
+            return cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_Length), cur.InBuffer
+        
+        header, data = steam_header_data(target_list[index])
+
+        headers += header
+        datas += data
+    return headers, datas
+        # while len(data) > start:
+        #     command = data[start: start + COMMAND]
+        #     ioctl_code = data[start + COMMAND: start + IOCTL_CODE]
+        #     inbuffer_length = data[start + IOCTL_CODE: start + INBUFFER_LENGTH]
+        #     outbuffer_length = data[start + INBUFFER_LENGTH: start + OUTBUFFER_LENGTH]
+        #     payload = data[start+OUTBUFFER_LENGTH:start+OUTBUFFER_LENGTH + u32(inbuffer_length)]
+
+        #     start = start +u32(inbuffer_length) + OUTBUFFER_LENGTH
+
+        #     sequence.append(IRP(ioctl_code, inbuffer_length, outbuffer_length, payload,command))
+        # return sequence
 
 
 

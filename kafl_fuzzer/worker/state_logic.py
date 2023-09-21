@@ -15,7 +15,7 @@ from kafl_fuzzer.technique.redqueen.mod import RedqueenInfoGatherer
 from kafl_fuzzer.technique.redqueen.workdir import RedqueenWorkdir
 from kafl_fuzzer.technique import bitflip, arithmetic, interesting_values, havoc
 
-from kafl_fuzzer.common.util import irp_list, add_to_irp_list, serialize
+from kafl_fuzzer.common.util import irp_list, add_to_irp_list, serialize, parse_header_and_data, serialize_sangjun
 
 
 class FuzzingStateLogic:
@@ -95,7 +95,7 @@ class FuzzingStateLogic:
             return self.create_update({"name": "redq/grim"}, None), new_payload
         elif metadata["state"]["name"] == "redq/grim":
             grimoire_info = self.handle_grimoire_inference(payload, metadata)
-            self.handle_redqueen(payload, metadata)
+            self.handle_redqueen(metadata)
             return self.create_update({"name": "deterministic"}, {"grimoire": grimoire_info}), None
         elif metadata["state"]["name"] == "deterministic":
             resume, afl_det_info = self.handle_deterministic(metadata)
@@ -217,11 +217,11 @@ class FuzzingStateLogic:
         
 
 
-    def handle_redqueen(self, payload, metadata):
-        # redqueen_start_time = time.time()
-        # if self.config.redqueen:
-        #     self.__perform_redqueen(payload, metadata)
-        # self.redqueen_time += time.time() - redqueen_start_time
+    def handle_redqueen(self, metadata):
+        redqueen_start_time = time.time()
+        if self.config.redqueen:
+            self.__perform_redqueen(metadata)
+        self.redqueen_time += time.time() - redqueen_start_time
         return
     
     def handle_havoc(self, metadata):
@@ -294,43 +294,63 @@ class FuzzingStateLogic:
             self.stage_info_findings += 1
         return bitmap, is_new
 
+    def execute_sangjun(self, headers, datas, label=None, extra_info=None):
+        
 
-    def execute_redqueen(self, payload):
+        '''
+        serailize all irps set before set payload and execute
+        '''
+        self.stage_info_execs += 1
+        if label and label != self.stage_info["method"]:
+            self.stage_update_label(label)
+
+        parent_info = self.get_parent_info(extra_info)
+        payload = serialize_sangjun(headers, datas)
+        #print(f"HELLO : {payload}")
+        bitmap, is_new = self.worker.execute(payload, parent_info)
+        if is_new:
+            self.stage_info_findings += 1
+        return bitmap, is_new
+
+
+    def execute_redqueen(self, headers, datas):
         # one regular execution to ensure all pages cached
         # also colored payload may yield new findings(?)
-        self.execute(payload)
-        return self.worker.execute_redqueen(payload)
+        self.execute_sangjun(headers, datas)
+        return self.worker.execute_redqueen(headers, datas)
 
 
-    def __get_bitmap_hash(self, payload):
-        bitmap, _ = self.execute(payload)
+    def __get_bitmap_hash(self,  headers, datas):
+        bitmap, _ = self.execute_sangjun( headers, datas)
         if bitmap is None:
             return None
         return bitmap.hash()
 
 
-    def __get_bitmap_hash_robust(self, payload):
-        hashes = {self.__get_bitmap_hash(payload) for _ in range(3)}
+    def __get_bitmap_hash_robust(self, headers, datas):
+        hashes = {self.__get_bitmap_hash( headers, datas) for _ in range(3)}
         if len(hashes) == 1:
             return hashes.pop()
         # self.logger.warn("Hash doesn't seem stable")
         return None
 
 
-    def __perform_redqueen(self, payload, metadata):
+    def __perform_redqueen(self, metadata):
         self.stage_update_label("redq_color")
 
-        orig_hash = self.__get_bitmap_hash_robust(payload)
+
+        headers, datas = parse_header_and_data(irp_list)
+        orig_hash = self.__get_bitmap_hash_robust(headers, datas)
         extension = bytes([207, 117, 130, 107, 183, 200, 143, 154])
-        appended_hash = self.__get_bitmap_hash_robust(payload + extension)
+        appended_hash = self.__get_bitmap_hash_robust(headers, datas + extension)
 
         if orig_hash and orig_hash == appended_hash:
             self.logger.debug("Redqueen: Input can be extended")
-            payload_array = bytearray(payload + extension)
+            payload_array = bytearray(datas + extension)
         else:
-            payload_array = bytearray(payload)
+            payload_array = bytearray(datas)
 
-        colored_alternatives = self.__perform_coloring(payload_array)
+        colored_alternatives = self.__perform_coloring(headers, payload_array)
         if colored_alternatives:
             payload_array = colored_alternatives[0]
             assert isinstance(colored_alternatives[0], bytearray), print(
@@ -344,12 +364,12 @@ class FuzzingStateLogic:
         rq_info.make_paths(RedqueenWorkdir(self.worker.pid, self.config))
         rq_info.verbose = False
         for pld in colored_alternatives:
-            if self.execute_redqueen(pld):
+            if self.execute_redqueen(headers, pld):
                 rq_info.get_info(pld)
 
         rq_info.get_proposals()
         self.stage_update_label("redq_mutate")
-        rq_info.run_mutate_redqueen(payload_array, self.execute)
+        rq_info.run_mutate_redqueen(headers, payload_array, self.execute_sangjun)
 
         #if self.mode_fix_checksum:
         #    for addr in rq_info.get_hash_candidates():
@@ -489,20 +509,20 @@ class FuzzingStateLogic:
             havoc.mutate_seq_havoc_array(irp_list, index, self.execute, havoc_amount)
 
 
-    def __check_colorization(self, orig_hash, payload_array, min, max):
+    def __check_colorization(self, orig_hash, headers, payload_array, min, max):
         backup = payload_array[min:max]
         for i in range(min, max):
             payload_array[i] = rand.int(255)
-        new_hash = self.__get_bitmap_hash(payload_array)
+        new_hash = self.__get_bitmap_hash(headers, payload_array)
         if new_hash is not None and new_hash == orig_hash:
             return True
         else:
             payload_array[min:max] = backup
             return False
 
-    def __colorize_payload(self, orig_hash, payload_array):
+    def __colorize_payload(self, orig_hash, headers, payload_array):
         def checker(min_i, max_i):
-            self.__check_colorization(orig_hash, payload_array, min_i, max_i)
+            self.__check_colorization(orig_hash, headers, payload_array, min_i, max_i)
 
         c = ColorizerStrategy(len(payload_array), checker)
         t = time.time()
@@ -516,9 +536,9 @@ class FuzzingStateLogic:
             i += 1
 
 
-    def __perform_coloring(self, payload_array):
+    def __perform_coloring(self, headers, payload_array):
         self.logger.debug("Redqueen: Initial colorize...")
-        orig_hash = self.__get_bitmap_hash_robust(payload_array)
+        orig_hash = self.__get_bitmap_hash_robust(headers, payload_array)
         if orig_hash is None:
             return None
 
@@ -527,8 +547,8 @@ class FuzzingStateLogic:
             if len(colored_arrays) >= FuzzingStateLogic.COLORIZATION_COUNT:
                 assert False  # TODO remove me
             tmpdata = bytearray(payload_array)
-            self.__colorize_payload(orig_hash, tmpdata)
-            new_hash = self.__get_bitmap_hash(tmpdata)
+            self.__colorize_payload(orig_hash, headers, tmpdata)
+            new_hash = self.__get_bitmap_hash(headers, tmpdata)
             if new_hash is not None and new_hash == orig_hash:
                 colored_arrays.append(tmpdata)
             else:
