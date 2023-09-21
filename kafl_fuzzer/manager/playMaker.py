@@ -1,6 +1,12 @@
 import time
 class PlayMaker:
     def __init__(self, time_limit):
+
+        self.use = (time_limit != None)
+        
+
+        if time_limit==None:
+            return
         if time_limit < 0:
             time_limit = 0
         self.use = (time_limit != None)

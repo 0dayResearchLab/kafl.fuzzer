@@ -117,6 +117,5 @@ def mutate_random_sequence(irp_list, index, func):
             for j in range(len(appended_target_list)):
                 new_irp_list.append(appended_target_list[j])
 
-
         func(new_irp_list)
         new_irp_list.clear()
