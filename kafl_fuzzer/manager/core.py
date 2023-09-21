@@ -70,6 +70,7 @@ def start(settings: LazySettings):
         return -1;
 
 
+
     if interface:
         interface_manager.load(interface)
         interface_manager.generate(seed_dir)

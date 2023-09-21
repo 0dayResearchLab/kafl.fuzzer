@@ -54,6 +54,10 @@ class WorkerTask:
         self.t_soft = config.timeout_soft
         self.t_check = config.timeout_check
         self.num_funky = 0
+        self.play_maker_mode = False
+
+    def play_maker_on(self):
+        self.play_maker_mode = True
 
     def handle_import(self, msg):
         meta_data = {"state": {"name": "import"}, "id": 0}
@@ -77,6 +81,9 @@ class WorkerTask:
     def handle_node(self, msg):
         meta_data = QueueNode.get_metadata(self.config.workdir, msg["task"]["nid"])
         payload = QueueNode.get_payload(self.config.workdir, meta_data)
+        play_maker = msg["task"]["play_maker"]
+        if play_maker and self.play_maker_mode is False:
+            self.play_maker_on()
 
         # fixme: determine globally based on all seen regulars
         t_dyn = self.t_soft + 1.2 * meta_data["info"]["performance"]

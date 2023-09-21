@@ -83,6 +83,12 @@ def cast_ip_range_to_list(parameter: Any) -> Optional[List[int]]:
         raise ValueError(f"{parameter}: invalid range specified: start > end")
     return [start, end]
 
+def cast_expand_play_maker(parameter: Any):
+    if parameter is None:
+        return None
+    else:
+        return float(parameter)
+
 def cast_expand_path(parameter: Any) -> Optional[str]:
     if parameter is None:
         return None
@@ -134,6 +140,7 @@ settings.validators.register(
     Validator("timeout_check", default=False, cast=bool),
     Validator("kickstart", cast=int),
     Validator("radamsa_path", default=None, cast=cast_expand_path),
+    Validator("play_maker", default=None, cast=cast_expand_play_maker),
     # qemu
     Validator("qemu_image", default=None),
     Validator("qemu_snapshot", default=None, cast=cast_expand_path),
