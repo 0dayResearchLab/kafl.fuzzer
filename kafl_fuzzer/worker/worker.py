@@ -170,7 +170,7 @@ class WorkerTask:
         valid_array = [ False for i in range(len(payload_list))]
 
 
-        for i in range(len(valid_array)):
+        for i in range(len(payload_list)):
             tmp_list = copy.deepcopy(payload_list)
             tmp_list.pop(i)
             payload = serialize(tmp_list)
