@@ -162,6 +162,24 @@ class WorkerTask:
                 self.handle_busy()
             else:
                 raise ValueError("Unknown message type {}".format(msg))
+    def crash_validate(self,data, old_res):
+        payload_list = []
+        add_to_irp_list(payload_list, data)
+
+        
+        tmp_list = copy.deepcopy(payload_list)
+
+
+        retry = 4
+        for _ in range(retry):
+            payload = serialize(tmp_list)
+            exec_res = self.__execute(payload)
+
+            if not exec_res.is_crash():
+                return False
+            time.sleep(1)
+        return True
+
 
     def quick_crash_diet(self,data, old_res):
         payload_list = []
@@ -185,9 +203,14 @@ class WorkerTask:
         for i in range(len(payload_list)):
             if valid_array[i]:
                 refined_list.append(payload_list[i])
-
-        
-        return serialize(refined_list)
+        # return serialize(refined_list)
+        # # final validate
+        serialize(refined_list)
+        exec_res = self.__execute(payload)
+        if not exec_res.is_crash():
+            return serialize(payload_list)
+        else:        
+            return serialize(refined_list)
 
 
     def quick_validate(self, data, old_res, trace=False):
@@ -434,8 +457,19 @@ class WorkerTask:
             if stable:
                 self.__send_to_manager(data, exec_res, info)
             elif crash:
-                refined_data = self.quick_crash_diet(data, exec_res)
-                self.__send_to_manager(refined_data, exec_res, info)
+                if self.crash_validate(data, exec_res) is True:
+                    print("it is valid crash")
+                    self.store_funky(data)
+                    refined_data = self.quick_crash_diet(data, exec_res)
+                    self.__send_to_manager(refined_data, exec_res, info)
+                else:
+                    ## it is not crash ##
+                    #self.store_funky(data)
+                    is_new_input = False
+                    exec_res.exit_reason = "regular"
+                    #print(f"it is not crash {exec_res} {is_new_input}")
+                    print("it is not valid crash")
+                    return exec_res, is_new_input
                 # else:
                 #     self.__send_to_manager(data, exec_res, info)
             else:

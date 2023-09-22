@@ -23,6 +23,8 @@ def u32(x, debug=None):
     try: 
         return struct.unpack('<L',x)[0]
     except:
+        with open("/tmp/sangjun","wb") as f:
+            f.write(debug)
         print(f"u32 error {x} {debug}")
         exit(0)
     

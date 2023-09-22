@@ -163,13 +163,13 @@ class FuzzingStateLogic:
         if not is_new:
             self.logger.debug("Imported payload produced no new coverage, skipping..")
 
-    def handle_kickstart(self, kick_len, metadata):
-        # random injection loop to kickstart corpus with no seeds, or to scan/test a target
-        busy_timeout = 5
-        start_time = time.time()
-        while (time.time() - start_time) < busy_timeout:
-            payload = rand.bytes(kick_len)
-            self.execute(payload, label="kickstart")
+    # def handle_kickstart(self, kick_len, metadata):
+    #     # random injection loop to kickstart corpus with no seeds, or to scan/test a target
+    #     busy_timeout = 5
+    #     start_time = time.time()
+    #     while (time.time() - start_time) < busy_timeout:
+    #         payload = rand.bytes(kick_len)
+    #         self.execute(payload, label="kickstart")
 
     def handle_initial(self, metadata):
         time_initial_start = time.time()
