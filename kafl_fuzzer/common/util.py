@@ -74,7 +74,7 @@ def add_to_irp_list(target_list, data):
         ioctl_code = data[start + COMMAND: start + IOCTL_CODE]
         inbuffer_length = data[start + IOCTL_CODE: start + INBUFFER_LENGTH]
         outbuffer_length = data[start + INBUFFER_LENGTH: start + OUTBUFFER_LENGTH]
-        payload = data[start+OUTBUFFER_LENGTH:start+OUTBUFFER_LENGTH + u32(inbuffer_length,debug=data)]
+        payload = data[start+OUTBUFFER_LENGTH:start+OUTBUFFER_LENGTH + u32(inbuffer_length,debug=data)].ljust(u32(inbuffer_length),b"\xff")
 
         start = start +u32(inbuffer_length) + OUTBUFFER_LENGTH
         target_list.append(IRP(ioctl_code, inbuffer_length, outbuffer_length, payload,command))
@@ -102,11 +102,12 @@ def serialize_sangjun(headers, datas):
         ioctl_code = headers[header_start + COMMAND: header_start + IOCTL_CODE]
         inbuffer_length = headers[header_start + IOCTL_CODE: header_start + INBUFFER_LENGTH]
         outbuffer_length = headers[header_start + INBUFFER_LENGTH: header_start + OUTBUFFER_LENGTH]
+
         payload = datas[data_start: data_start + u32(inbuffer_length)]
 
         header_start += OUTBUFFER_LENGTH
         data_start += u32(inbuffer_length)
-        result+=command + ioctl_code + inbuffer_length + outbuffer_length + payload
+        result+=command + ioctl_code + inbuffer_length + outbuffer_length + payload.ljust(u32(inbuffer_length),b"\xff")
 
     return result
     # try:
@@ -135,7 +136,7 @@ def parse_all(data):
         ioctl_code = data[start + COMMAND: start + IOCTL_CODE]
         inbuffer_length = data[start + IOCTL_CODE: start + INBUFFER_LENGTH]
         outbuffer_length = data[start + INBUFFER_LENGTH: start + OUTBUFFER_LENGTH]
-        payload = data[start+OUTBUFFER_LENGTH:start+OUTBUFFER_LENGTH + u32(inbuffer_length)]
+        payload = data[start+OUTBUFFER_LENGTH:start+OUTBUFFER_LENGTH + u32(inbuffer_length)].ljust(u32(inbuffer_length),b"\xff")
 
         start = start +u32(inbuffer_length) + OUTBUFFER_LENGTH
 

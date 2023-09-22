@@ -460,6 +460,8 @@ class WorkerTask:
                 if self.crash_validate(data, exec_res) is True:
                     print("it is valid crash")
                     self.store_funky(data)
+
+                    
                     refined_data = self.quick_crash_diet(data, exec_res)
                     self.__send_to_manager(refined_data, exec_res, info)
                 else:

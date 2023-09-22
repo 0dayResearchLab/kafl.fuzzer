@@ -80,13 +80,19 @@ def mutate_seq_splice_array(irp_list, index, func, max_iterations, resize=False)
     files = glob.glob(location_corpus + "/regular/payload_*")
     
     target = irp_list[index]
+    InBufferLength = irp_list[index].InBuffer_length
     #print("mutate_seq_splice_array")
     header, data = parse_payload(target)
     for _ in range(splice_rounds):
         spliced_data = havoc_splicing(data, files)
         if spliced_data is None:
             return # could not find any suitable splice pair for this file
-        spliced_data = spliced_data[:target.InBuffer_length]
+
+        if len(data) >= InBufferLength:
+            spliced_data = spliced_data[:target.InBuffer_length]
+        else:
+            spliced_data = spliced_data.ljust(InBufferLength,b"\xff") #TO DO -> make random bytes
+            
         target.InBuffer = spliced_data
         func(irp_list)
         mutate_seq_havoc_array(irp_list,
