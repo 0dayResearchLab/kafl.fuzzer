@@ -79,6 +79,8 @@ def add_args_general(parser):
                         action='store_true', default=False)
     parser.add_argument('-i', '--interface', required=False, metavar='<file>', default=False,
                         help='enable interfacing')
+    parser.add_argument('--use_call_stack', required=False, help='not validate crash and minimization crash within call stack trace mode',
+                        action='store_true', default=False)
 
 # kAFL/Fuzzer-specific options
 def add_args_fuzzer(parser):

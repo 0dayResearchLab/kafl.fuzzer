@@ -457,23 +457,27 @@ class WorkerTask:
             if stable:
                 self.__send_to_manager(data, exec_res, info)
             elif crash:
-                if self.crash_validate(data, exec_res) is True:
-                    print("it is valid crash")
-                    self.store_funky(data)
 
-                    
-                    refined_data = self.quick_crash_diet(data, exec_res)
-                    self.__send_to_manager(refined_data, exec_res, info)
+                if self.config.use_call_stack:
+                    self.__send_to_manager(data, exec_res, info)
                 else:
-                    ## it is not crash ##
-                    #self.store_funky(data)
-                    is_new_input = False
-                    exec_res.exit_reason = "regular"
-                    #print(f"it is not crash {exec_res} {is_new_input}")
-                    print("it is not valid crash")
-                    return exec_res, is_new_input
-                # else:
-                #     self.__send_to_manager(data, exec_res, info)
+                    if self.crash_validate(data, exec_res) is True:
+                        print("it is valid crash")
+                        self.store_funky(data)
+
+                        
+                        refined_data = self.quick_crash_diet(data, exec_res)
+                        self.__send_to_manager(refined_data, exec_res, info)
+                    else:
+                        ## it is not crash ##
+                        #self.store_funky(data)
+                        is_new_input = False
+                        exec_res.exit_reason = "regular"
+                        #print(f"it is not crash {exec_res} {is_new_input}")
+                        print("it is not valid crash")
+                        return exec_res, is_new_input
+                    # else:
+                    #     self.__send_to_manager(data, exec_res, info)
             else:
                 assert(0==1),print("This region never executed")
 

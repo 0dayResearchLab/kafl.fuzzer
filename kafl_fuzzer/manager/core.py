@@ -60,7 +60,15 @@ def start(settings: LazySettings):
     seed_dir   = settings.seed_dir
     num_worker = settings.processes
     interface = settings.interface
+    call_stack_mode = settings.use_call_stack
 
+
+    if call_stack_mode:
+        file_path = "/tmp/kAFL_crash_call_stack.log"
+        if os.path.exists(file_path):
+            print("there is an prev kAFL_crash_call_stack.log, trying to removing it..")
+            os.remove(file_path)
+            
     if not post_self_check(settings):
         logger.error("Startup checks failed. Exit.")
         return -1
