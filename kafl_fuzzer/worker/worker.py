@@ -478,8 +478,13 @@ class WorkerTask:
                         return exec_res, is_new_input
                     # else:
                     #     self.__send_to_manager(data, exec_res, info)
+            elif exec_res.exit_reason == "timeout":
+                return exec_res, is_new_input
+            
+            elif exec_res.exit_reason == 'regular':
+                return exec_res, is_new_input
             else:
-                assert(0==1),print("This region never executed")
+                assert(0==1),print(exec_res.exit_reason)
 
         # restart Qemu on crash
         if crash:
