@@ -1,0 +1,1 @@
+[{"IoControlCode": "0x222000", "InBufferLength": ["10-10"], "OutBufferLength": ["1-19"]}, {"IoControlCode": "0x222004", "InBufferLength": ["10-10"], "OutBufferLength": ["1-19"]}, {"IoControlCode": "0x222008", "InBufferLength": ["9-9"], "OutBufferLength": ["1-19"]}]

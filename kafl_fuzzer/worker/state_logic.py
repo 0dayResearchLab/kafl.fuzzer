@@ -228,8 +228,9 @@ class FuzzingStateLogic:
         havoc_afl = True
         havoc_splice = True
         havoc_dependency = True
-        havoc_radamsa = self.config.radamsa
-        havoc_grimoire = self.config.grimoire
+        havoc_argv_mutate = True
+        # havoc_radamsa = self.config.radamsa
+        # havoc_grimoire = self.config.grimoire
         havoc_redqueen = self.config.redqueen
 
         for i in range(1):
@@ -262,6 +263,8 @@ class FuzzingStateLogic:
                     self.__perform_havoc(irp_list, index, metadata, use_splicing=True)
                     self.splice_time += time.time() - splice_start_time
 
+                if havoc_argv_mutate:
+                    self.__perform_havoc(irp_list, index, metadata, use_argv_mutate=True)
             if self.worker.play_maker_mode:            
                 for index in range(len(irp_list)):
                     if havoc_dependency:
@@ -499,7 +502,7 @@ class FuzzingStateLogic:
 
 
 
-    def __perform_havoc(self, irp_list, index, metadata, use_splicing=False, dependency_stage=False):
+    def __perform_havoc(self, irp_list, index, metadata, use_splicing=False, dependency_stage=False, use_argv_mutate=False):
         perf = metadata["performance"]
         havoc_amount = havoc.havoc_range(self.HAVOC_MULTIPLIER / perf)
 
@@ -509,6 +512,9 @@ class FuzzingStateLogic:
         elif dependency_stage:
             self.stage_update_label("dependency stage")
             havoc.mutate_random_sequence(irp_list, index, self.execute)
+        elif use_argv_mutate:
+            self.stage_update_label("argv_mutate")
+            havoc.mutate_length(irp_list, index, self.execute)
         else:
             self.stage_update_label("afl_havoc")
             havoc.mutate_seq_havoc_array(irp_list, index, self.execute, havoc_amount)

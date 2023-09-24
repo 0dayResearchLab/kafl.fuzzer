@@ -8,7 +8,7 @@ AFL-style havoc and splicing stage
 """
 
 import glob
-from kafl_fuzzer.common.util import parse_all, parse_payload, read_binary_file
+from kafl_fuzzer.common.util import parse_all, parse_payload, read_binary_file, interface_manager, interesting_length
 from kafl_fuzzer.common.rand import rand
 from kafl_fuzzer.technique.havoc_handler import *
 
@@ -125,3 +125,43 @@ def mutate_random_sequence(irp_list, index, func):
 
         func(new_irp_list)
         new_irp_list.clear()
+
+def mutate_length(irp_list, index, func):
+
+    target = irp_list[index]
+    InBufferLength = target.InBuffer_length
+    OutBufferLength = target.OutBuffer_length
+    IoControlCode = target.IoControlCode
+    if InBufferLength <= 1 or OutBufferLength <= 1:
+        return
+    
+    # When it is unable to change the length.
+    # InBufferLength and OutBufferLength is concrete value
+    if "InBufferLength" in interface_manager[IoControlCode] and \
+        "OutBufferLength" in interface_manager[IoControlCode]:
+        return
+    
+    def get_interesting_list(target_value):
+            # 초기값 설정
+        result_index = -1
+
+        # 리스트를 순회하며 19보다 작은 가장 큰 값을 찾음
+        for index, value in enumerate(interesting_length):
+            if value < target_value:
+                result_index = index
+            else:
+                break
+        sliced_list = interesting_length[:result_index + 1]
+        sliced_list.append(target_value)
+        return sliced_list
+    
+    if "InBufferLength" not in interface_manager[IoControlCode]:
+        inbuffer_ranges = interface_manager[IoControlCode]["InBufferRange"]
+        inlength = 0
+        for rg in inbuffer_ranges:
+            inlength = max(inlength, rg.stop - 1)
+        candidates = get_interesting_list(inlength)
+        chosen = rand.select(candidates)
+
+    
+    func(irp_list)

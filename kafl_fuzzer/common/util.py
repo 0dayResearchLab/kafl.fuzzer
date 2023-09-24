@@ -49,6 +49,9 @@ MAX_RAND_VALUES_SIZE = 0x400
 
 MAX_RANGE_VALUE = 0xffffffff
 
+interesting_length = [1<<i for i in range(33)]
+
+
 
 class IRP:
     def __init__(self, IoControlCode=0, InBuffer_length=0, OutBuffer_Length=0, InBuffer=b'', Command=0):
