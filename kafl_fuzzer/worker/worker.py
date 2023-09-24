@@ -208,9 +208,9 @@ class WorkerTask:
         serialize(refined_list)
         exec_res = self.__execute(payload)
         if not exec_res.is_crash():
-            return serialize(payload_list)
+            return serialize(payload_list), False
         else:        
-            return serialize(refined_list)
+            return serialize(refined_list), True
 
 
     def quick_validate(self, data, old_res, trace=False):
@@ -462,19 +462,26 @@ class WorkerTask:
                     self.__send_to_manager(data, exec_res, info)
                 else:
                     if self.crash_validate(data, exec_res) is True:
-                        print("it is valid crash")
+                        print("crash validate success")
                         self.store_funky(data)
 
                         
-                        refined_data = self.quick_crash_diet(data, exec_res)
-                        self.__send_to_manager(refined_data, exec_res, info)
+                        refined_data, diet_error = self.quick_crash_diet(data, exec_res)
+
+                        if not diet_error:
+                            self.__send_to_manager(refined_data, exec_res, info)
+                        elif diet_error:
+                            print('there is diet error')
+                            self.__send_to_manager(data, exec_res, info)
+                        else:
+                            assert(0==1), print("this code nevere be executed")
                     else:
                         ## it is not crash ##
                         #self.store_funky(data)
                         is_new_input = False
                         exec_res.exit_reason = "regular"
                         #print(f"it is not crash {exec_res} {is_new_input}")
-                        print("it is not valid crash")
+                        print("crash validate failed")
                         return exec_res, is_new_input
                     # else:
                     #     self.__send_to_manager(data, exec_res, info)

@@ -132,8 +132,9 @@ def mutate_length(irp_list, index, func):
     InBufferLength = target.InBuffer_length
     OutBufferLength = target.OutBuffer_length
     IoControlCode = target.IoControlCode
-    if InBufferLength <= 1 or OutBufferLength <= 1:
-        return
+
+    # if InBufferLength <= 1 or OutBufferLength <= 1:
+    #     return
     
     # When it is unable to change the length.
     # InBufferLength and OutBufferLength is concrete value
@@ -155,13 +156,17 @@ def mutate_length(irp_list, index, func):
         sliced_list.append(target_value)
         return sliced_list
     
-    if "InBufferLength" not in interface_manager[IoControlCode]:
-        inbuffer_ranges = interface_manager[IoControlCode]["InBufferRange"]
-        inlength = 0
-        for rg in inbuffer_ranges:
-            inlength = max(inlength, rg.stop - 1)
-        candidates = get_interesting_list(inlength)
-        chosen = rand.select(candidates)
+    def get_valid_length(target, IoControlCode):
+        ## Get valid Range ##
+        chosen = None
+        if "InBufferLength" not in interface_manager[IoControlCode]:
+            inbuffer_ranges = interface_manager[IoControlCode]["InBufferRange"]
+            inlength = 0
+            for rg in inbuffer_ranges:
+                inlength = max(inlength, rg.stop - 1)
+            candidates = get_interesting_list(inlength)
+            chosen = rand.select(candidates)
 
-    
+        return chosen
+
     func(irp_list)
