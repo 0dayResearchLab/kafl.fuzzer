@@ -228,14 +228,17 @@ class Interface:
     
     
     def generate(self, seed_dir):
-       
+    
+        print("preparing seed files with irec result...")
         import mmh3
         def hash(x): mmh3.hash(x, signed=False)
         for iocode in interface_manager.get_all_codes():
             payload = self.__generateIRP(iocode)
             with open(seed_dir+f"/{hex(iocode)}_{str(hash(payload))}","wb") as file:
                 file.write(payload)
-    
+        import time
+        time.sleep(3)
+
     def get_all_codes(self):
         return self.interface.keys()
 
