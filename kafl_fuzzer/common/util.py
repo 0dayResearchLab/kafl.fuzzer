@@ -227,8 +227,12 @@ class Interface:
         return irp.Command + p32(irp.IoControlCode) + p32(irp.InBuffer_length) + p32(irp.OutBuffer_Length) + irp.InBuffer
     
     
-    def generate(self, seed_dir):
-    
+    def generate(self, seed_dir):        
+        if os.path.exists(seed_dir):
+            print('[!] remove old seed directory...')
+            shutil.rmtree(seed_dir, ignore_errors=True)            
+            os.makedirs(seed_dir)
+            
         print("preparing seed files with irec result...")
         import mmh3
         def hash(x): mmh3.hash(x, signed=False)

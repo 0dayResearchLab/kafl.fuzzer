@@ -104,6 +104,9 @@ def start(settings: LazySettings):
     # attempt to confine ourselves to unused set, unless --cpu-offset override was given
     if num_worker + 1 >= len(avail-used):
         logger.warn(f"Warning: Requested {num_worker} workers but {len(used)} out of {len(avail)} vCPUs seem busy?")
+        # FORCE DESTROY QEMU
+        if len(used) != 0:
+            os.system("virsh destroy windows_x86_64_vagrant-kafl-windows")
         time.sleep(2)
     elif not settings.cpu_offset:
         os.sched_setaffinity(0, avail-used)
