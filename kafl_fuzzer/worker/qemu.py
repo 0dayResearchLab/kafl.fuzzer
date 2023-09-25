@@ -531,7 +531,7 @@ class qemu:
         try:
             self.fs_shm.seek(0)
             self.fs_shm.write(payload)
-            #self.fs_shm.flush()
+            self.fs_shm.flush()
         except ValueError:
             if self.exiting:
                 sys.exit(0)

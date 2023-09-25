@@ -291,7 +291,7 @@ int main(int argc, char** argv)
  
     init_agent_handshake();
  
-    init_panic_handlers();
+    //init_panic_handlers();
  
     /* this hypercall submits the current CR3 value */ 
     kAFL_hypercall(HYPERCALL_KAFL_SUBMIT_CR3, 0);
@@ -302,6 +302,12 @@ int main(int argc, char** argv)
     // Submit PT ranges
     set_ip_range();
  
+
+    hprintf("getting fuzzing start snapshot");
+    hprintf("[+] hello snapshot");
+    int j=0;
+    for(int i=0;i<0x10;i++)
+	j+=1;
     // Snapshot here
     kAFL_hypercall(HYPERCALL_KAFL_NEXT_PAYLOAD, 0);
  
@@ -336,7 +342,29 @@ int main(int argc, char** argv)
     uint8_t *inbuffer;
 
 
+//    hprintf("getting fuzzing start");
 		
+   	for(;;)
+	{
+		
+		if(header[0] != IOCTL)
+		{
+			function_code = header[0];
+			IoControlCode = header[1];
+			InBufferLength = header[2];
+			OutBufferLength = header[3];
+			inbuffer = header+4;
+			hprintf("command %x controlcode %x InBufferLength %x utBufferLength %x inbuffer %c",
+					function_code,
+					IoControlCode,
+					InBufferLength,
+					OutBufferLength,
+					*inbuffer
+			       );
+			hprintf("[-] bye");
+			break;
+		}
+	//	hprintf("[+] hello");
 			function_code = header[0];
 			IoControlCode = header[1];
 			InBufferLength = header[2];
@@ -361,7 +389,7 @@ int main(int argc, char** argv)
 		    header = inbuffer + InBufferLength;
 	
 
-
+	}
     /* inform fuzzer about finished fuzzing iteration */
     // Will reset back to start of snapshot here
     kAFL_hypercall(HYPERCALL_KAFL_RELEASE, 0);
