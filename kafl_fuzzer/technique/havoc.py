@@ -11,7 +11,7 @@ import glob
 from kafl_fuzzer.common.util import parse_all, parse_payload, read_binary_file, interface_manager, interesting_length
 from kafl_fuzzer.common.rand import rand
 from kafl_fuzzer.technique.havoc_handler import *
-
+import copy
 
 def load_dict(file_name):
     f = open(file_name)
@@ -129,15 +129,16 @@ def mutate_random_sequence(irp_list, index, func):
 def mutate_length(irp_list, index, func):
 
     target = irp_list[index]
-    InBufferLength = target.InBuffer_length
-    OutBufferLength = target.OutBuffer_length
+
     IoControlCode = target.IoControlCode
+    origin_InBufferLength = InBufferLength = target.InBuffer_length
+    origin_OutBufferLength = OutBufferLength = target.OutBuffer_length
+    origin_InBuffer = copy.deepcopy(target.InBuffer)
 
     # if InBufferLength <= 1 or OutBufferLength <= 1:
     #     return
     
-    # When it is unable to change the length.
-    # InBufferLength and OutBufferLength is concrete value
+    # When Length is fixed
     if "InBufferLength" in interface_manager[IoControlCode] and \
         "OutBufferLength" in interface_manager[IoControlCode]:
         return
@@ -159,14 +160,42 @@ def mutate_length(irp_list, index, func):
     def get_valid_length(target, IoControlCode):
         ## Get valid Range ##
         chosen = None
-        if "InBufferLength" not in interface_manager[IoControlCode]:
-            inbuffer_ranges = interface_manager[IoControlCode]["InBufferRange"]
+        if target+"Length" not in interface_manager[IoControlCode]:
+            inbuffer_ranges = interface_manager[IoControlCode][target+"Range"]
             inlength = 0
             for rg in inbuffer_ranges:
                 inlength = max(inlength, rg.stop - 1)
-            candidates = get_interesting_list(inlength)
-            chosen = rand.select(candidates)
 
+            x =  rand.int(10)
+            if x < 7:
+                candidates = get_interesting_list(inlength)
+                chosen = rand.select(candidates)
+            else:
+                #candidates = rand.int()#get_interesting_list(inlength)
+                chosen = rand.int(inlength) #rand.select(candidates)
         return chosen
+    
 
-    func(irp_list)
+    retry = 8
+
+    for _ in range(retry):
+        chosen = get_valid_length("InBuffer",IoControlCode)
+        if chosen is not None:
+            target.InBuffer_length = chosen
+
+            if chosen > target.InBuffer_length:
+                target.InBuffer.ljust(chosen,b"\xff")
+            else:
+                target.InBuffer = target.InBuffer[:chosen]
+
+
+        chosen = get_valid_length("OutBuffer",IoControlCode)
+        if chosen is not None:
+            target.OutBuffer_length = chosen
+
+
+        func(irp_list)
+
+    target.InBuffer_length = origin_InBufferLength
+    target.OutBuffer_length = origin_OutBufferLength
+    target.InBuffer = origin_InBuffer

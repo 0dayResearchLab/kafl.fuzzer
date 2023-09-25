@@ -263,8 +263,8 @@ class FuzzingStateLogic:
                     self.__perform_havoc(irp_list, index, metadata, use_splicing=True)
                     self.splice_time += time.time() - splice_start_time
 
-                # if havoc_argv_mutate:
-                #     self.__perform_havoc(irp_list, index, metadata, use_argv_mutate=True)
+                if havoc_argv_mutate:
+                    self.__perform_havoc(irp_list, index, metadata, use_argv_mutate=True)
             if self.worker.play_maker_mode:            
                 for index in range(len(irp_list)):
                     if havoc_dependency:

@@ -54,11 +54,11 @@ interesting_length = [1<<i for i in range(33)]
 
 
 class IRP:
-    def __init__(self, IoControlCode=0, InBuffer_length=0, OutBuffer_Length=0, InBuffer=b'', Command=0):
+    def __init__(self, IoControlCode=0, InBuffer_length=0, OutBuffer_length=0, InBuffer=b'', Command=0):
         self.Command = Command
         self.IoControlCode = u32(IoControlCode)
         self.InBuffer_length = u32(InBuffer_length)
-        self.OutBuffer_Length = u32(OutBuffer_Length)
+        self.OutBuffer_length = u32(OutBuffer_length)
         if InBuffer == b'':
             self.InBuffer = bytearray( b"\xff" * self.InBuffer_length)
         else:
@@ -89,7 +89,7 @@ def serialize(target_list):
 
         for index in range(len(target_list)):
             cur = target_list[index]
-            result += cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_Length)  + cur.InBuffer
+            result += cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_length)  + cur.InBuffer
         return result
     except AttributeError:
         print(f"Attribute Erorr :::::::::::::::::::: {cur} {target_list}")
@@ -127,7 +127,7 @@ def serialize_sangjun(headers, datas):
 irp_list = []
 
 def parse_payload(cur):
-    return cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_Length), cur.InBuffer
+    return cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_length), cur.InBuffer
 
 
 def parse_all(data):
@@ -157,7 +157,7 @@ def parse_header_and_data(target_list):
     for index in range(len(target_list)):
 
         def steam_header_data(cur):
-            return cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_Length), cur.InBuffer
+            return cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_length), cur.InBuffer
         
         header, data = steam_header_data(target_list[index])
 
@@ -224,12 +224,12 @@ class Interface:
         
         irp = IRP(p32(iocode), p32(inlength), p32(outlength),Command=b"IOIO")
 
-        return irp.Command + p32(irp.IoControlCode) + p32(irp.InBuffer_length) + p32(irp.OutBuffer_Length) + irp.InBuffer
+        return irp.Command + p32(irp.IoControlCode) + p32(irp.InBuffer_length) + p32(irp.OutBuffer_length) + irp.InBuffer
     
     
     def generate(self, seed_dir):
     
-        print("preparing seed files with irec result...")
+        logger.info("[+] preparing seed files with irec result...")
         import mmh3
         def hash(x): mmh3.hash(x, signed=False)
         for iocode in interface_manager.get_all_codes():
@@ -345,7 +345,7 @@ def prepare_working_dir(config):
         return False
 
     if purge:
-        print("[purge] removing old dirs")
+        logger.info("[+] purge : removing old dirs")
         shutil.rmtree(workdir, ignore_errors=True)
         import time
         time.sleep(2)

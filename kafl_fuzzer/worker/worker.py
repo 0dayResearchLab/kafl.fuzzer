@@ -31,7 +31,8 @@ from kafl_fuzzer.worker.qemu import QemuIOException
 from kafl_fuzzer.worker.qemu import qemu as Qemu
 from kafl_fuzzer.common.logger import WorkerLogAdapter
 
-
+from kafl_fuzzer.common.color import FLUSH_LINE, FAIL, OKBLUE, ENDC
+PREFIX = FLUSH_LINE + FAIL
 import copy
 def worker_loader(pid, config):
     worker = WorkerTask(pid, config)
@@ -462,7 +463,9 @@ class WorkerTask:
                     self.__send_to_manager(data, exec_res, info)
                 else:
                     if self.crash_validate(data, exec_res) is True:
-                        print("crash validate success")
+                        
+                        self.logger.critical(PREFIX+"[+] crash validate success"+ENDC)
+                        #print("crash validate success")
                         self.store_funky(data)
 
                         
@@ -471,17 +474,19 @@ class WorkerTask:
                         if not diet_error:
                             self.__send_to_manager(refined_data, exec_res, info)
                         elif diet_error:
-                            print('there is diet error')
+                            self.logger.critical(PREFIX+"[-] there is diet error"+ENDC)
+                            #print('there is diet error')
                             self.__send_to_manager(data, exec_res, info)
                         else:
-                            assert(0==1), print("this code nevere be executed")
+                            assert(0==1), self.logger.critical(PREFIX+"[-] this code never be executed"+ENDC)
                     else:
                         ## it is not crash ##
                         #self.store_funky(data)
                         is_new_input = False
                         exec_res.exit_reason = "regular"
                         #print(f"it is not crash {exec_res} {is_new_input}")
-                        print("crash validate failed")
+                        #print("crash validate failed")
+                        self.logger.critical(PREFIX+"[-] crash validate failed"+ENDC)
                         return exec_res, is_new_input
                     # else:
                     #     self.__send_to_manager(data, exec_res, info)
@@ -491,7 +496,7 @@ class WorkerTask:
             elif exec_res.exit_reason == 'regular':
                 return exec_res, is_new_input
             else:
-                assert(0==1),print(exec_res.exit_reason)
+                assert(0==1),self.logger.critical("[-] this code region never be executed")
 
         # restart Qemu on crash
         if crash:
