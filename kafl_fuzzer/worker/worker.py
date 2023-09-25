@@ -474,7 +474,7 @@ class WorkerTask:
                         if not diet_error:
                             self.__send_to_manager(refined_data, exec_res, info)
                         elif diet_error:
-                            self.logger.critical(PREFIX+"[-] there is diet error"+ENDC)
+                            self.logger.critical(PREFIX+"[-] but there is diet error"+ENDC)
                             #print('there is diet error')
                             self.__send_to_manager(data, exec_res, info)
                         else:
