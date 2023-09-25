@@ -1,0 +1,8 @@
+ 278  kafl fuzz -w ./work --seed-dir ./seed --redqueen -p `nproc` --purge --maker 1 --t-soft 40 -i mwfsmflt.json
+-> cpu full is funky
+
+  279  kafl fuzz -w ./work --seed-dir ./seed --redqueen -p 10 --purge --maker 1 --t-soft 40 -i mwfsmflt.json
+  -> cpu low is robust
+
+  installer
+  -> https://shorturl.at/avxR5
