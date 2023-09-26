@@ -66,7 +66,7 @@ def start(settings: LazySettings):
     if call_stack_mode:
         file_path = "/tmp/kAFL_crash_call_stack.log"
         if os.path.exists(file_path):
-            print("there is an prev kAFL_crash_call_stack.log, trying to removing it..")
+            logger.info("[+] call_stack : there is an prev kAFL_crash_call_stack.log, trying to removing it..")
             os.remove(file_path)
             
     if not post_self_check(settings):
