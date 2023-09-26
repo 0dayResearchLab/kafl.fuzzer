@@ -6,3 +6,20 @@
 
   installer
   -> https://shorturl.at/avxR5
+
+
+
+  ======================================================================================
+  real robust
+
+
+  진짜 robust하게 가는법
+
+1. 그냥 kafl빌드한 다음 fuzzer부분만 바꾸기 qemu는 배꾸지 않음
+
+2. vuln.exe내용을 올려준 것으로 바꿈
+
+3. https://shorturl.at/avxR5에서 다운로드 -> 난 에러가 안 났음
+sc create t binpath=C:\Users\vagrant\Downloads\vuln_test.exe start=auto depend=mwfsmfltr
+
+4. kafl fuzz -w work --seed-dir seed --redqueen --kickstart 0 -p 15 --t-soft 255 --purge -i mwfsmflt.json

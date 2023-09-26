@@ -80,8 +80,8 @@ class FuzzingStateLogic:
     def process_import(self, payload, metadata):
         self.init_stage_info(metadata)
         add_to_irp_list(irp_list, payload)
-        target = irp_list[0]
-        print(f"payload is {target.Command} {hex(target.IoControlCode)} {hex(target.InBuffer_length)}")
+        #target = irp_list[0]
+        #print(f"payload is {target.Command} {hex(target.IoControlCode)} {hex(target.InBuffer_length)}")
         #import time
         #time.sleep(1)
         self.handle_import(metadata)
