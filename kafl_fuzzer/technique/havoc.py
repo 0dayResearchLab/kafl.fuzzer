@@ -174,8 +174,8 @@ def mutate_length(irp_list, index, func):
                 #candidates = rand.int()#get_interesting_list(inlength)
                 chosen = rand.int(inlength) #rand.select(candidates)
             
-            if chosen > 2**20:
-                chosen = 2**20
+            if chosen > 131068-100:
+                chosen = 131068-100
         return chosen
     
 
