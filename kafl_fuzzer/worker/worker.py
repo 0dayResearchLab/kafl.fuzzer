@@ -481,7 +481,7 @@ class WorkerTask:
                             assert(0==1), self.logger.critical(PREFIX+"[-] this code never be executed"+ENDC)
                     else:
                         ## it is not crash ##
-                        #self.store_funky(data)
+                        self.store_funky(data)
                         is_new_input = False
                         exec_res.exit_reason = "regular"
                         #print(f"it is not crash {exec_res} {is_new_input}")
