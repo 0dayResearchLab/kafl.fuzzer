@@ -1,25 +1,20 @@
- 278  kafl fuzz -w ./work --seed-dir ./seed --redqueen -p `nproc` --purge --maker 1 --t-soft 40 -i mwfsmflt.json
--> cpu full is funky
-
-  279  kafl fuzz -w ./work --seed-dir ./seed --redqueen -p 10 --purge --maker 1 --t-soft 40 -i mwfsmflt.json
-  -> cpu low is robust
-
-  installer
-  -> https://shorturl.at/avxR5
-
-
-
-  ======================================================================================
-  real robust
-
-
-  진짜 robust하게 가는법
-
-1. 그냥 kafl빌드한 다음 fuzzer부분만 바꾸기 qemu는 배꾸지 않음
+1. 그냥 kafl빌드한 다음 fuzzer바꾸기
+-> mv /home/b/kAFL/kafl/fuzzer fuzzer-origin
+-> git clone https://github.com/0dayResearchLab/my-kAFL-0.7v-new.git fuzzer
 
 2. vuln.exe내용을 올려준 것으로 바꿈
 
-3. https://shorturl.at/avxR5에서 다운로드 -> 난 에러가 안 났음
+3. https://shorturl.at/avxR5에서 다운로드 후 타겟 드라이버에 vuln_test.exe 걸어주기
 sc create t binpath=C:\Users\vagrant\Downloads\vuln_test.exe start=auto depend=mwfsmfltr
 
-4. kafl fuzz -w work --seed-dir seed --redqueen --kickstart 0 -p 15 --t-soft 255 --purge -i mwfsmflt.json
+4. kafl fuzz -w work --seed-dir seed --redqueen -p `nproc` --t-soft 255 --purge -i mwfsmflt.json
+
+
+======================================================================================================================
+
+1. Crash log 기록하기
+crash-monitor -> fuzzer/Harness_for_nyx.sys 사용
+-> sc create t binpath=C:\Users\vagrant\Downloads\vuln_test.exe start=auto depend=mwfsmfltr
+-> sc create hook binpath=C:\Users\vagrant\Downloads\Harness_for_nyx.sys start=auto type=kernel
+
+2. kafl fuzz -w work --seed-dir seed --redqueen -p `nproc` --t-soft 255 --purge -i mwfsmflt.json --use_call_stack
