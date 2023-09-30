@@ -26,19 +26,103 @@ along with QEMU-PT.  If not, see <http://www.gnu.org/licenses/>.
 #include <psapi.h>
 
 
+/*
+ * Copyright 2020 Namjun Jo (kirasys@theori.io)
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+#include <psapi.h>
+#include <winternl.h>
+
+LPCSTR SVCNAME = "hook";
+LPCSTR DRIVERNAME = "Harness_for_nyx.sys";
+LPCSTR DRIVERPATH = "C:\\Users\\vagrant\\Downloads\\Harness_for_nyx.sys";
+
+typedef struct _RTL_PROCESS_MODULE_INFORMATION
+{
+    HANDLE Section;
+    PVOID MappedBase;
+    PVOID ImageBase;
+    ULONG ImageSize;
+    ULONG Flags;
+    USHORT LoadOrderIndex;
+    USHORT InitOrderIndex;
+    USHORT LoadCount;
+    USHORT OffsetToFileName;
+    UCHAR FullPathName[256];
+} RTL_PROCESS_MODULE_INFORMATION, *PRTL_PROCESS_MODULE_INFORMATION;
+ 
+typedef struct _RTL_PROCESS_MODULES
+{
+    ULONG NumberOfModules;
+    RTL_PROCESS_MODULE_INFORMATION Modules[1];
+} RTL_PROCESS_MODULES, *PRTL_PROCESS_MODULES;
+
+
+int create_service() {
+    int success;
+	SC_HANDLE scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+	if (!scmHandle) {
+		hprintf("[create_service] OpenSCManager error!");
+		return 0;
+	}
+
+	success = CreateServiceA(scmHandle, SVCNAME, SVCNAME,
+		SERVICE_ALL_ACCESS, SERVICE_KERNEL_DRIVER,
+		SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, DRIVERPATH,
+		NULL, NULL, NULL, NULL, NULL);
+	
+	CloseServiceHandle(scmHandle);
+	return success;
+}
+
+
+int load_driver() {
+    int success = 1;
+	SC_HANDLE scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+	if (!scmHandle) {
+		hprintf("[load_driver] OpenSCManager error!");
+		return 0;
+	}
+
+	SC_HANDLE schService = OpenServiceA(
+		scmHandle,       // SCM database 
+		SVCNAME,          // name of service 
+		SERVICE_ALL_ACCESS);
+	if (!schService) {
+		CloseServiceHandle(scmHandle);
+		hprintf("[load_driver] OpenServiceA error!");
+		return 0;
+	}
+
+	// Start the service
+	if (StartService(schService, 0, NULL) == 0) {
+        hprintf("[load_driver] StartService error!");
+        success = 0;
+    }
+
+	CloseServiceHandle(schService);
+	CloseServiceHandle(scmHandle);
+	return success;
+}
+
+
+
+
+
 #define ARRAY_SIZE 1024
 
 #define INFO_SIZE                       (128 << 10)				/* 128KB info string */
 
 #define PAYLOAD_MAX_SIZE (128*1024)
 
-#define DEVICE_NAME         L"\\Device\\testKafl"
-#define IOCTL_KAFL_INPUT    (ULONG) CTL_CODE(FILE_DEVICE_UNKNOWN, 0x800, METHOD_NEITHER, FILE_ANY_ACCESS)
+
 #define VULN_DRIVER_NAME "mwfsmflt.sys"
 
 #define IOCTL 0x4f494f49 // 'IOIO'
 #define WRITE 0x52575257 // 'WRITE'
-#define REVERT 0x45524552 // 'RERE'
+#define CRASH_LOG 0x13371337 // load crash log
 typedef unsigned int uint32_t;
 
 
@@ -139,25 +223,50 @@ void init_agent_handshake() {
 }
 
 
-typedef struct _RTL_PROCESS_MODULE_INFORMATION
-{
-    HANDLE Section;
-    PVOID MappedBase;
-    PVOID ImageBase;
-    ULONG ImageSize;
-    ULONG Flags;
-    USHORT LoadOrderIndex;
-    USHORT InitOrderIndex;
-    USHORT LoadCount;
-    USHORT OffsetToFileName;
-    UCHAR FullPathName[256];
-} RTL_PROCESS_MODULE_INFORMATION, *PRTL_PROCESS_MODULE_INFORMATION;
+
+void sangjun() {
+    char* info_buffer = (char*)VirtualAlloc(0, INFO_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    memset(info_buffer, 0xff, INFO_SIZE);
+    memset(info_buffer, 0x00, INFO_SIZE);
+    int pos = 0;
+
+   LPVOID drivers[ARRAY_SIZE];
+   DWORD cbNeeded;
+   int cDrivers, i;
+   NTSTATUS status;
+
+   if( EnumDeviceDrivers(drivers, sizeof(drivers), &cbNeeded) && cbNeeded < sizeof(drivers))
+   { 
+        cDrivers = cbNeeded / sizeof(drivers[0]);
+        PRTL_PROCESS_MODULES ModuleInfo;
  
-typedef struct _RTL_PROCESS_MODULES
-{
-    ULONG NumberOfModules;
-    RTL_PROCESS_MODULE_INFORMATION Modules[1];
-} RTL_PROCESS_MODULES, *PRTL_PROCESS_MODULES;
+        ModuleInfo=(PRTL_PROCESS_MODULES)VirtualAlloc(NULL,1024*1024,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
+     
+        if(!ModuleInfo){
+            habort("set_ip_range: VirtualAlloc failed\n");
+            goto fail;
+        }
+     
+        if(!NT_SUCCESS(status=NtQuerySystemInformation((SYSTEM_INFORMATION_CLASS)11,ModuleInfo,1024*1024,NULL))){
+            VirtualFree(ModuleInfo,0,MEM_RELEASE);
+            habort("set_ip_range: NtQuerySystemInformation failed\n");
+            goto fail;
+        }
+
+        pos += sprintf(info_buffer + pos, "kAFL Windows x86-64 Kernel Addresses (%d Drivers)\n\n", cDrivers);
+        //_tprintf(TEXT("kAFL Windows x86-64 Kernel Addresses (%d Drivers)\n\n"), cDrivers);      
+        pos += sprintf(info_buffer + pos, "START-ADDRESS\t\tEND-ADDRESS\t\tDRIVER\n");
+        //_tprintf(TEXT("START-ADDRESS\t\tEND-ADDRESS\t\tDRIVER\n"));    
+        
+        for (i=0; i < cDrivers; i++ ){
+            pos += sprintf(info_buffer + pos, "0x%p\t0x%lld\t%s\n", drivers[i], ((UINT64)drivers[i]) + ModuleInfo->Modules[i].ImageSize, ModuleInfo->Modules[i].FullPathName+ModuleInfo->Modules[i].OffsetToFileName);            
+            hprintf("0x%p\t0x%p\t%s\n", drivers[i], drivers[i]+ModuleInfo->Modules[i].ImageSize, ModuleInfo->Modules[i].FullPathName+ModuleInfo->Modules[i].OffsetToFileName);  
+        }
+   }
+   fail:
+    return;
+}
+
 
 void set_ip_range() {
     char* info_buffer = (char*)VirtualAlloc(0, INFO_SIZE, MEM_COMMIT, PAGE_READWRITE);
@@ -277,39 +386,17 @@ int main(int argc, char** argv)
     kAFL_hypercall(HYPERCALL_KAFL_ACQUIRE, 0); 
 
 
-       	for(;;)
+    for(;;)
 	{
-
-		if(header[0] != IOCTL)
-		{
-			/*function_code = header[0];
-
-			IoControlCode = header[1];
-			InBufferLength = header[2];
-			OutBufferLength = header[3];
-			inbuffer = header+4;
-			hprintf("command %x controlcode %x InBufferLength %x utBufferLength %x inbuffer %c",
-					function_code,
-					IoControlCode,
-					InBufferLength,
-					OutBufferLength,
-					*inbuffer
-			       );
-			hprintf("[-] bye");
-			*/
-			break;
-		}
-	//	hprintf("[+] hello");
-			function_code = header[0];
-			IoControlCode = header[1];
-			InBufferLength = header[2];
-			OutBufferLength = header[3];
-			inbuffer = header+4;
-
-
-
-		    if(function_code == IOCTL)
-		    {
+        int break_loop=0;
+        switch(header[0])
+        {
+            case IOCTL:
+            	function_code = header[0];
+                IoControlCode = header[1];
+                InBufferLength = header[2];
+                OutBufferLength = header[3];
+                inbuffer = header+4;
                 DeviceIoControl(kafl_vuln_handle,
                     IoControlCode,
                     (LPVOID)inbuffer,
@@ -320,10 +407,31 @@ int main(int argc, char** argv)
                     NULL
 
                     );
-		    }
-		    header = inbuffer + InBufferLength;
-
-
+		    
+		        header = inbuffer + InBufferLength;
+                break;
+            case CRASH_LOG:
+                hprintf("[+] crash log start");
+                if(create_service())
+                    hprintf("[+] create servicev success");
+                if(load_driver())
+                    hprintf("[+] load driver success");
+                sangjun();
+                    hprintf("[+] sangjun success");
+                init_panic_handlers();
+            	function_code = header[0];
+                IoControlCode = header[1];
+                InBufferLength = header[2];
+                OutBufferLength = header[3];
+                inbuffer = header+4;
+                header = inbuffer + InBufferLength;
+                break;
+            default:
+                break_loop=1;
+                break;
+        }
+        if(break_loop)
+            break;
 	}
     /* inform fuzzer about finished fuzzing iteration */
     // Will reset back to start of snapshot here

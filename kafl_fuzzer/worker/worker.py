@@ -21,7 +21,7 @@ import lz4.frame as lz4
 
 #from kafl_fuzzer.common.config import FuzzerConfiguration
 from kafl_fuzzer.common.rand import rand
-from kafl_fuzzer.common.util import atomic_write, serialize_sangjun, add_to_irp_list, serialize
+from kafl_fuzzer.common.util import atomic_write, serialize_sangjun, add_to_irp_list, serialize, IRP, p32
 from kafl_fuzzer.manager.bitmap import BitmapStorage, GlobalBitmap
 from kafl_fuzzer.manager.communicator import ClientConnection, MSG_IMPORT, MSG_RUN_NODE, MSG_BUSY
 from kafl_fuzzer.manager.node import QueueNode
@@ -213,6 +213,23 @@ class WorkerTask:
         else:        
             return serialize(refined_list), True
 
+    def quick_crash_log(self,data, old_res):
+        payload_list = []
+        # IoControlCode=0, InBuffer_length=0, OutBuffer_length=0, InBuffer=b'', Command=0
+        
+        add_to_irp_list(payload_list, data)
+
+        new_payload_list = []
+        new_payload_list.append(IRP(p32(0x13371337), p32(4), p32(4), b"BBBB",p32(0x13371337)))
+
+        for i in payload_list:
+            new_payload_list.append(i)
+        payload = serialize(new_payload_list)
+        exec_res = self.__execute(payload)
+        if exec_res.is_crash():
+            return True
+        else:
+            return False
 
     def quick_validate(self, data, old_res, trace=False):
         # Validate in persistent mode. Faster but problematic for very funky targets
@@ -463,7 +480,7 @@ class WorkerTask:
                 self.__send_to_manager(data, exec_res, info)
             elif crash:
                 info['qemu_id'] = str(self.q.process.pid)
-                if self.config.use_call_stack:
+                if False:#self.config.use_call_stack:
                     self.__send_to_manager(data, exec_res, info)
                 else:
                     if self.crash_validate(data, exec_res) is True:
@@ -474,12 +491,21 @@ class WorkerTask:
 
                         
                         refined_data, diet_error = self.quick_crash_diet(data, exec_res)
-
+                        
                         if not diet_error:
+                            if self.quick_crash_log(refined_data,exec_res):
+                                self.logger.critical(PREFIX+"[-] SUCCCCCCCEESS"+ENDC)    
+                            else:
+                                self.logger.critical(PREFIX+"[-] failed"+ENDC)
                             self.__send_to_manager(refined_data, exec_res, info)
                         elif diet_error:
+
                             self.logger.critical(PREFIX+"[-] but there is diet error"+ENDC)
                             #print('there is diet error')
+                            if self.quick_crash_log(data,exec_res):
+                                self.logger.critical(PREFIX+"[-] SUCCCCCCCEESS"+ENDC)
+                            else:
+                                self.logger.critical(PREFIX+"[-] failed"+ENDC)
                             self.__send_to_manager(data, exec_res, info)
                         else:
                             assert(0==1), self.logger.critical(PREFIX+"[-] this code never be executed"+ENDC)
