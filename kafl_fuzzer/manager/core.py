@@ -64,11 +64,14 @@ def start(settings: LazySettings):
 
 
     if call_stack_mode:
-        file_path = "/tmp/kAFL_crash_call_stack.log"
-        if os.path.exists(file_path):
-            logger.info("[+] call_stack : there is an prev kAFL_crash_call_stack.log, trying to removing it..")
-            os.remove(file_path)
-            
+        import glob
+        file_paths = glob.glob("/tmp/kAFL_crash_call_stack_*")#"/tmp/kAFL_crash_call_stack.log"
+
+        for file_path in file_paths:
+            if os.path.exists(file_path):
+                logger.info("[+] call_stack : there is an prev kAFL_crash_call_stack.log, trying to removing it..")
+                os.remove(file_path)
+                
     if not post_self_check(settings):
         logger.error("Startup checks failed. Exit.")
         return -1

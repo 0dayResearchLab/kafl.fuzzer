@@ -167,8 +167,11 @@ class ManagerTask:
             backup_data = bitmap.copy_to_array()
 
         tmp_trace_file = info.get("pt_dump", None)
+        #print(f'aaaaaaaaaaaaaaaaaaaaaaa {info.get("qemu_id",None)}')
         should_store, new_bytes, new_bits = self.bitmap_storage.should_store_in_queue(bitmap)
         if should_store:
+
+            
             node_struct = {"info": info, "state": {"name": "initial"}}
             node = QueueNode(self.config, payload, bitmap_array, node_struct, write=False)
             node.set_new_bytes(new_bytes, write=False)
@@ -176,6 +179,19 @@ class ManagerTask:
             self.queue.insert_input(node, bitmap)
             self.store_trace(node.get_id(), tmp_trace_file)
 
+            crash_log_qemu_id = info.get("qemu_id",None)
+
+            if crash_log_qemu_id and node.get_exit_reason()=="crash" and self.config.use_call_stack:
+                time.sleep(2)
+                #from kafl_fuzzer.common.color import FLUSH_LINE, FAIL, OKBLUE, ENDC
+
+                #PREFIX = FLUSH_LINE + FAIL
+                #logger.critical(PREFIX+f"crash log moving /tmp/kAFL_crash_call_stack_{crash_log_qemu_id} -> {self.config.workdir}/corpus/crash/{node.get_id()}_crash_log"+ENDC)
+                #logger.info(color.FAIL+ + color.ENDC)
+                #__get_payload_filename
+                #return "%s/corpus/%s/payload_%05d" % (workdir, exit_reason, node_id)
+                shutil.move(f"/tmp/kAFL_crash_call_stack_{crash_log_qemu_id}",self.config.workdir + "/corpus/crash/payload_%05d_crash_log"%(node.get_id()))
+                
             ## trace last finding time to play maker
             if self.play_maker.use and self.play_maker.toggle is False:
                 self.play_maker.last_find_time = time.time()

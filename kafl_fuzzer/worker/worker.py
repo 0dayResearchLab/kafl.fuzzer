@@ -458,7 +458,7 @@ class WorkerTask:
             if stable:
                 self.__send_to_manager(data, exec_res, info)
             elif crash:
-
+                info['qemu_id'] = str(self.q.process.pid)
                 if self.config.use_call_stack:
                     self.__send_to_manager(data, exec_res, info)
                 else:
