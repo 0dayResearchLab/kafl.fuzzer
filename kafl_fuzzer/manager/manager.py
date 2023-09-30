@@ -190,7 +190,14 @@ class ManagerTask:
                 #logger.info(color.FAIL+ + color.ENDC)
                 #__get_payload_filename
                 #return "%s/corpus/%s/payload_%05d" % (workdir, exit_reason, node_id)
-                shutil.move(f"/tmp/kAFL_crash_call_stack_{crash_log_qemu_id}",self.config.workdir + "/corpus/crash/payload_%05d_crash_log"%(node.get_id()))
+                src = f"/tmp/kAFL_crash_call_stack_{crash_log_qemu_id}"
+                dst = self.config.workdir + "/corpus/crash/payload_%05d_crash_log"%(node.get_id())
+
+                if os.path.exists(src):
+                    shutil.move(src, dst)
+                else:
+                    pass
+
                 
             ## trace last finding time to play maker
             if self.play_maker.use and self.play_maker.toggle is False:

@@ -377,6 +377,10 @@ class WorkerTask:
     def __execute(self, data, retry=0):
 
         try:
+            # if os.path.exists(f"/tmp/kAFL_crash_call_stack_{self.q.process.pid}"):
+            #     os.remove(f"/tmp/kAFL_crash_call_stack_{self.q.process.pid}")
+            #     #str(self.q.process.pid)
+            #     time.sleep(0.3)
             self.q.set_payload(data)
             res = self.q.send_payload()
             self.statistics.event_exec(bb_cov=self.q.bb_seen, trashed=res.trashed)
