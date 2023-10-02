@@ -173,7 +173,7 @@ class WorkerTask:
 
         retry = 4
         for _ in range(retry):
-            payload = serialize(tmp_list)
+            payload, is_multi_irp = serialize(tmp_list)
             exec_res = self.__execute(payload)
 
             if not exec_res.is_crash():
@@ -182,36 +182,53 @@ class WorkerTask:
         return True
 
 
-    def quick_crash_diet(self,data, old_res):
+    def quick_crash_diet(self,data, retry=0):
         payload_list = []
         add_to_irp_list(payload_list, data)
 
-        valid_array = [ False for i in range(len(payload_list))]
+        if len(payload_list)<5:
+            ret_payload, _ = serialize(payload_list)
+            return ret_payload, True
+        
+        if retry>5:
+            ret_payload, _ = serialize(payload_list)
+            return ret_payload, False
+
+        valid_array = [ True for i in range(len(payload_list))]
+
+        def get_validate_map(payload_list):
+            for i in range(len(payload_list)):
+
+                tmp_list = copy.deepcopy(payload_list)
+                tmp_list.pop(i)
+                payload, is_multi_irp = serialize(tmp_list)
+                exec_res = self.__execute(payload)
+                if exec_res.is_crash():
+                    valid_array[i] = False
+                else:
+                    valid_array[i] = True
+                tmp_list.clear()
+            return payload_list
 
 
-        for i in range(len(payload_list)):
-            tmp_list = copy.deepcopy(payload_list)
-            tmp_list.pop(i)
-            payload = serialize(tmp_list)
-            exec_res = self.__execute(payload)
 
-            if exec_res.is_crash():
-                valid_array[i] = False
-            else:
-                valid_array[i] = True
-
+        get_validate_map(payload_list)
+        
         refined_list = []
         for i in range(len(payload_list)):
             if valid_array[i]:
                 refined_list.append(payload_list[i])
-        # return serialize(refined_list)
-        # # final validate
-        serialize(refined_list)
+        
+        payload, is_multi_irp = serialize(refined_list)
         exec_res = self.__execute(payload)
+        
         if not exec_res.is_crash():
-            return serialize(payload_list), False
-        else:        
-            return serialize(refined_list), True
+            return self.quick_crash_diet(data, retry=retry+1)
+        else:
+            #self.logger.critical(PREFIX+f"[+] DEBUG {valid_array}"+ENDC)
+            ret_payload, _ = serialize(refined_list)
+            return ret_payload, True
+        
 
 
     def quick_validate(self, data, old_res, trace=False):
@@ -360,7 +377,7 @@ class WorkerTask:
         if timeout:
             old_timeout = self.q.get_timeout()
             self.q.set_timeout(timeout)
-        payload = serialize_sangjun(headers, datas)
+        payload, is_multi_irp = serialize_sangjun(headers, datas)
         exec_res = self.__execute(payload)
 
         if timeout:
@@ -398,14 +415,14 @@ class WorkerTask:
         return self.__execute(data, retry=retry+1)
 
 
-    def execute(self, data, info, hard_timeout=False):
+    def execute(self, data, info, hard_timeout=False, is_multi_irp=False):
 
         if len(data) > self.payload_limit:
             data = data[:self.payload_limit]
 
         exec_res = self.__execute(data)
 
-        is_new_input = self.bitmap_storage.should_send_to_manager(exec_res, exec_res.exit_reason)
+        is_new_input, is_new_bytes = self.bitmap_storage.should_send_to_manager(exec_res, exec_res.exit_reason)
         crash = exec_res.is_crash()
         stable = False
 
@@ -413,25 +430,19 @@ class WorkerTask:
         # if both -trace and -trace_cb is provided, we must delay tracing to calibration stage
         trace_pt = self.config.trace and not self.config.trace_cb
 
+        if is_multi_irp and is_new_input and exec_res.exit_reason == "regular":
+            is_new_input = is_new_bytes
+            
         # store crashes and any validated new behavior
         # do not validate timeouts and crashes at this point as they tend to be nondeterministic
         if is_new_input:
             if not crash:
                 assert exec_res.is_lut_applied()
 
-                if self.config.funky:
-                    stable, runtime = self.funky_validate(data, exec_res, trace=trace_pt)
-                    exec_res.performance = runtime
-                else:
-                    stable, runtime = self.quick_validate(data, exec_res, trace=trace_pt)
-                    exec_res.performance = (exec_res.performance + runtime)/2
 
-                if trace_pt and stable:
-                    trace_in = "%s/pt_trace_dump_%d" % (self.config.workdir, self.pid)
-                    if os.path.exists(trace_in):
-                        with tempfile.NamedTemporaryFile(delete=False,dir=self.config.workdir + "/traces") as f:
-                            shutil.move(trace_in, f.name)
-                            info['pt_dump'] = f.name
+                stable, runtime = self.quick_validate(data, exec_res, trace=trace_pt)
+                exec_res.performance = (exec_res.performance + runtime)/2
+
                 if not stable:
                     # TODO: auto-throttle persistent runs based on funky rate?
                     self.logger.debug("Input validation failed! Target funky?..")
@@ -462,6 +473,7 @@ class WorkerTask:
             if stable:
                 self.__send_to_manager(data, exec_res, info)
             elif crash:
+                self.logger.critical(PREFIX+"[+] crash found"+ENDC)
                 info['qemu_id'] = str(self.q.process.pid)
                 if self.config.use_call_stack:
                     self.__send_to_manager(data, exec_res, info)
@@ -473,11 +485,12 @@ class WorkerTask:
                         self.store_funky(data)
 
                         
-                        refined_data, diet_error = self.quick_crash_diet(data, exec_res)
+                        refined_data, diet_error = self.quick_crash_diet(data)
 
-                        if not diet_error:
+                        if diet_error:
+                            self.logger.critical(PREFIX+"[+] diet success"+ENDC)
                             self.__send_to_manager(refined_data, exec_res, info)
-                        elif diet_error:
+                        elif diet_error is False:
                             self.logger.critical(PREFIX+"[-] but there is diet error"+ENDC)
                             #print('there is diet error')
                             self.__send_to_manager(data, exec_res, info)
@@ -488,8 +501,6 @@ class WorkerTask:
                         self.store_funky(data)
                         is_new_input = False
                         exec_res.exit_reason = "regular"
-                        #print(f"it is not crash {exec_res} {is_new_input}")
-                        #print("crash validate failed")
                         self.logger.critical(PREFIX+"[-] crash validate failed"+ENDC)
                         return exec_res, is_new_input
                     # else:

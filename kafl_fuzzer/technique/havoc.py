@@ -101,18 +101,52 @@ def mutate_seq_splice_array(irp_list, index, func, max_iterations, resize=False)
                                havoc_rounds,
                                resize=resize)
 
-def mutate_random_sequence(irp_list, index, func):
+def delete_insns(irp_list, func):
     files = glob.glob(location_corpus + "/regular/payload_*")
 
 
     rand.shuffle(files)
-    retry = 10
-    new_irp_list = []    
+    retry = 50
+    new_irp_list = []   
+
+    for _ in range(retry):
+        new_irp_list = copy.deepcopy(irp_list)
+        new_irp_list.pop(rand.int(len(new_irp_list)))
+        func(new_irp_list)
+        new_irp_list.clear()
+
+def replace_insns(irp_list, func):
+    files = glob.glob(location_corpus + "/regular/payload_*")
+
+
+    rand.shuffle(files)
+    retry = 50
+    new_irp_list = []   
+
+    for _ in range(retry):
+        new_irp_list = copy.deepcopy(irp_list)
+        new_irp_list.pop(rand.int(len(new_irp_list)))
+
+        target = read_binary_file(rand.select(files))
+        appended_target_list = parse_all(target)
+        new_irp_list.append(rand.select(appended_target_list))
+
+        func(new_irp_list)
+        new_irp_list.clear()
+
+def add_insns(irp_list, func):
+    files = glob.glob(location_corpus + "/regular/payload_*")
+
+    max_insns = 12
+    rand.shuffle(files)
+    retry = 50
+    new_irp_list = []   
+
     for _ in range(retry):
         #for i in range(rand.int(len(files))):
 
-        if len(files) > 4:
-            limit = 4
+        if len(files) > max_insns:
+            limit = max_insns
         else:
             limit = len(files)
 
@@ -120,11 +154,30 @@ def mutate_random_sequence(irp_list, index, func):
             target = read_binary_file(files[i])
 
             appended_target_list = parse_all(target)
+            if len(appended_target_list) > 2:
+                continue
             for j in range(len(appended_target_list)):
                 new_irp_list.append(appended_target_list[j])
 
         func(new_irp_list)
         new_irp_list.clear()
+
+
+
+def mutate_random_sequence(irp_list, index, func):
+ 
+    max_insns = 12
+    ## delete
+    insns = len(irp_list)
+    x = rand.int(10)
+
+    if insns > max_insns and x < 5:
+        delete_insns(irp_list, func)
+    elif insns > max_insns and x < 10:
+        replace_insns(irp_list, func)
+    else:
+        add_insns(irp_list, func)
+        
 
 def mutate_length(irp_list, index, func):
 

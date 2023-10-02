@@ -233,28 +233,14 @@ class FuzzingStateLogic:
         havoc_splice = True
         havoc_dependency = True
         havoc_argv_mutate = True
-        # havoc_radamsa = self.config.radamsa
-        # havoc_grimoire = self.config.grimoire
+
         havoc_redqueen = self.config.redqueen
 
         for i in range(1):
-            # Dict based on RQ learned tokens
-            # TODO: AFL only has deterministic dict stage for manual dictionary.
-            # However RQ dict and auto-dict actually grow over time. Perhaps
-            # create multiple dicts over time and store progress in metadata?
+            
             if havoc_redqueen:
                 self.__perform_rq_dict(metadata)
 
-            # if havoc_grimoire:
-            #     grimoire_start_time = time.time()
-            #     self.__perform_grimoire(payload, metadata)
-            #     self.grimoire_time += time.time() - grimoire_start_time
-
-            # if havoc_radamsa:
-            #     radamsa_start_time = time.time()
-            #     self.__perform_radamsa(payload, metadata)
-            #     self.radamsa_time += time.time() - radamsa_start_time
-            
 
             for index in range(len(irp_list)):
                 if havoc_afl:
@@ -267,7 +253,7 @@ class FuzzingStateLogic:
                     self.__perform_havoc(irp_list, index, metadata, use_splicing=True)
                     self.splice_time += time.time() - splice_start_time
 
-                if havoc_argv_mutate:
+                if havoc_argv_mutate and self.config.interface:
                     self.__perform_havoc(irp_list, index, metadata, use_argv_mutate=True)
             if self.worker.play_maker_mode:            
                 for index in range(len(irp_list)):
@@ -295,9 +281,9 @@ class FuzzingStateLogic:
             self.stage_update_label(label)
 
         parent_info = self.get_parent_info(extra_info)
-        payload = serialize(irp_list)
+        payload, is_multi_irp = serialize(irp_list)
         #print(f"HELLO : {payload}")
-        bitmap, is_new = self.worker.execute(payload, parent_info)
+        bitmap, is_new = self.worker.execute(payload, parent_info, is_multi_irp=is_multi_irp)
         if is_new:
             self.stage_info_findings += 1
         return bitmap, is_new
@@ -313,9 +299,9 @@ class FuzzingStateLogic:
             self.stage_update_label(label)
 
         parent_info = self.get_parent_info(extra_info)
-        payload = serialize_sangjun(headers, datas)
+        payload, is_multi_irp = serialize_sangjun(headers, datas)
         #print(f"HELLO : {payload}")
-        bitmap, is_new = self.worker.execute(payload, parent_info)
+        bitmap, is_new = self.worker.execute(payload, parent_info, is_multi_irp=is_multi_irp)
         if is_new:
             self.stage_info_findings += 1
         return bitmap, is_new

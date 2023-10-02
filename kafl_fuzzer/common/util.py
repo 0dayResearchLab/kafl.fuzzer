@@ -86,11 +86,11 @@ def serialize(target_list):
     result = b""
 
     try:
-
+        is_multi_irp = True if len(target_list)>1 else False
         for index in range(len(target_list)):
             cur = target_list[index]
             result += cur.Command + p32(cur.IoControlCode) + p32(cur.InBuffer_length) + p32(cur.OutBuffer_length)  + cur.InBuffer
-        return result
+        return result, is_multi_irp
     except AttributeError:
         print(f"Attribute Erorr :::::::::::::::::::: {cur} {target_list}")
         exit(0)
@@ -98,6 +98,7 @@ def serialize(target_list):
 def serialize_sangjun(headers, datas):
     result = b""
 
+    count = 0
     header_start = 0
     data_start = 0
     while len(headers) > header_start:
@@ -111,8 +112,12 @@ def serialize_sangjun(headers, datas):
         header_start += OUTBUFFER_LENGTH
         data_start += u32(inbuffer_length)
         result+=command + ioctl_code + inbuffer_length + outbuffer_length + payload.ljust(u32(inbuffer_length),b"\xff")
-
-    return result
+        count+=1
+    if count >1:
+        is_multi_irp=True
+    else:
+        is_multi_irp = False
+    return result, is_multi_irp
     # try:
 
     #     for index in range(len(target_list)):
