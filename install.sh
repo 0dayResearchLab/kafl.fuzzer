@@ -177,7 +177,7 @@ fuzz_snapshot()
     cd /home/$currentUser/kAFL/kafl/examples/windows_x86_64
     sudo make init
 }
-fuzz_snapshot()
+revoke_snapshot()
 {
     cd /home/$currentUser/kAFL/kafl/examples/windows_x86_64
     sudo make revoke
@@ -231,7 +231,7 @@ case $1 in
     "fuzz_snapshot")
         fuzz_snapshot
         ;;
-    "revoke_snapshot"
+    "revoke_snapshot")
         revoke_snapshot
         ;;
 esac
