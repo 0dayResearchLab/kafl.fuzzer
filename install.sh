@@ -44,20 +44,11 @@ system_deps()
 system_init(){
     echo "[*] clone kAFL"
     cd ~
-    wget https://github.com/IntelLabs/kAFL/archive/refs/tags/v0.8.zip
-    unzip v0.8.zip 
-    mv kAFL-0.8 kAFL
+    git clone https://github.com/0dayResearchLab/kAFL.git
     cd kAFL
-    sudo chmod 777 deploy
-    sed '1s/7.1.0/6.7.0/g' ./deploy/requirements.txt >> ./deploy/test
-    rm -rf ./deploy/requirements.txt 
-    mv ./deploy/test ./deploy/requirements.txt
-
 
     echo "[+] build nyx+ kernel.."
     sudo make deploy
-    sudo sed -i '7s/hidden/menu/g' /etc/default/grub
-    sudo update-grub
 }
 
 check_gitconfig()
@@ -116,34 +107,14 @@ vm_build()
     cd /home/$currentUser/kAFL
     sudo make deploy
 
-    cd /home/$currentUser | set -o pipefail
-
-    cat /tmp/hashicorp.key | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-
-    cd /home/$currentUser/kAFL
-    sed -i '35s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '37s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '38s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '39s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '40s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '41s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '42s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '43s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '44s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '45s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-    sed -i '46s/^/# /' /home/$currentUser/kAFL/deploy/intellabs/kafl/roles/examples/tasks/template_windows.yml
-
     echo "[+] install templates done!"
 
-    sudo apt-get install vagrant=2.3.6-1 ruby-dev libvirt-dev -y
     sudo make deploy -- --tags examples,examples-template-windows1
 
     sudo vagrant plugin install vagrant-host-shell
     sudo apt-get install libvirt-dev -y
     sudo vagrant plugin install vagrant-libvirt
 
-    sudo sed -i "8s/7.1.0/6.7.0/g" /home/$currentUser/kAFL/kafl/examples/templates/windows/Makefile
-    sed -i "18s/packer_windows_libvirt.box/packer_windows_libvirt_amd.box/g" /home/$currentUser/kAFL/kafl/examples/templates/windows/Makefile
     cd /home/$currentUser/kAFL/kafl/examples/templates/windows
 
     echo "[*] Qemu Image build..."
@@ -159,17 +130,13 @@ vm_import()
 
     sudo apt install qemu qemu-kvm libvirt-clients libvirt-daemon-system virtinst bridge-utils
     sudo systemctl enable libvirtd
-    sudo systemctl start libvirtd
+    sudo systemctl start
+    reboot
 }
 
 initial_snapshot()
 {
     cd /home/$currentUser/kAFL/kafl/examples/windows_x86_64
-
-    sudo rm -rf Makefile
-    sudo git clone https://gist.github.com/609f559d3d15dd80f5c801fdc3b719a4.git
-    sudo mv 609f559d3d15dd80f5c801fdc3b719a4/Makefile ./
-    sudo rm -rf 609f559d3d15dd80f5c801fdc3b719a4
     sudo make init
 }
 
@@ -203,24 +170,30 @@ currentUser=$(whoami)
 
 
 case $1 in
+    ## dependency
 	"deps")
 		system_deps
 		;;
+    ## build kAFL.sh
     "init")
 		system_init
 		;;
     "check")
         system_check
         ;;
+    ## build Qemu 1
     "vm_build")
         vm_build
         ;;
+    ## build Qemu 2
     "vm_import")
         vm_import
         ;;
+    ## itwill be error
     "initial_snapshot")
         initial_snapshot
         ;;
+    ## edit Image.sh
     "edit_vm_dir")
         edit_vm_dir
         ;;
