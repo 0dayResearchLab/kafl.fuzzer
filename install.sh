@@ -157,8 +157,30 @@ edit_vm_dir()
     sudo virsh pool-start newpool
 
     echo "[+] reboot after 10 sec.."
-    sleep 10
     sudo reboot
+}
+
+initial_snapshot()
+{
+    cd /home/$currentUser/kAFL/kafl/examples/windows_x86_64
+    sudo make snapshot
+}
+
+target_setting()
+{
+    cd /home/$currentUser/kAFL/kafl/examples/windows_x86_64
+    sudo make gui
+}
+
+fuzz_snapshot()
+{
+    cd /home/$currentUser/kAFL/kafl/examples/windows_x86_64
+    sudo make init
+}
+fuzz_snapshot()
+{
+    cd /home/$currentUser/kAFL/kafl/examples/windows_x86_64
+    sudo make revoke
 }
 # Auto-scale building with number of CPUs. Override with ./install -j N <action>
 jobs=$(nproc)
@@ -196,5 +218,20 @@ case $1 in
     ## edit Image.sh
     "edit_vm_dir")
         edit_vm_dir
+        ;;
+        ## init snapshot
+    "init_snapshot")
+        initial_snapshot
+        ;;
+        ## edit Image.sh
+    "target_setting")
+        target_setting
+        ;;
+        ## edit Image.sh
+    "fuzz_snapshot")
+        fuzz_snapshot
+        ;;
+    "revoke_snapshot"
+        revoke_snapshot
         ;;
 esac
