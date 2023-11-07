@@ -153,8 +153,6 @@ def parse_all(data):
 
 
 def parse_header_and_data(target_list):
-    start =0 
-
 
     
     headers = b''

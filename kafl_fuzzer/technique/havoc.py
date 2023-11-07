@@ -184,8 +184,8 @@ def mutate_length(irp_list, index, func):
     target = irp_list[index]
 
     IoControlCode = target.IoControlCode
-    origin_InBufferLength = InBufferLength = target.InBuffer_length
-    origin_OutBufferLength = OutBufferLength = target.OutBuffer_length
+    origin_InBufferLength = target.InBuffer_length
+    origin_OutBufferLength = target.OutBuffer_length
     origin_InBuffer = copy.deepcopy(target.InBuffer)
 
     # if InBufferLength <= 1 or OutBufferLength <= 1:

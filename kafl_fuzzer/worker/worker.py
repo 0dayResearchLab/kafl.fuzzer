@@ -15,7 +15,6 @@ import time
 import signal
 import sys
 import shutil
-import tempfile
 import logging
 import lz4.frame as lz4
 
@@ -31,7 +30,7 @@ from kafl_fuzzer.worker.qemu import QemuIOException
 from kafl_fuzzer.worker.qemu import qemu as Qemu
 from kafl_fuzzer.common.logger import WorkerLogAdapter
 
-from kafl_fuzzer.common.color import FLUSH_LINE, FAIL, OKBLUE, ENDC
+from kafl_fuzzer.common.color import FLUSH_LINE, FAIL, ENDC
 PREFIX = FLUSH_LINE + FAIL
 import copy
 def worker_loader(pid, config):

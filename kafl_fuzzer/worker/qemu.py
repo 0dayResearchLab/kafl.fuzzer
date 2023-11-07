@@ -11,7 +11,6 @@ import ctypes
 import mmap
 import os
 import socket
-import struct
 import subprocess
 import sys
 import time

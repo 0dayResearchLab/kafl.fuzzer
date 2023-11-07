@@ -176,8 +176,6 @@ class FuzzingStateLogic:
     #         self.execute(payload, label="kickstart")
 
     def handle_initial(self, metadata):
-        time_initial_start = time.time()
-
         # if self.config.trace_cb:
         #     self.stage_update_label("trace")
         #     self.worker.trace_payload(payload, metadata)
@@ -450,7 +448,6 @@ class FuzzingStateLogic:
 
             # Interesting value mutations..
             if det_info["stage"] == "intr":
-                effector_map = det_info.get("eff_map", None)
                 interesting_values.mutate_seq_8_bit_interesting(irps_list, index, self.execute)#, skip_null=skip_zero, effector_map=effector_map)
                 interesting_values.mutate_seq_16_bit_interesting(irps_list, index, self.execute)#, skip_null=skip_zero, effector_map=effector_map, arith_max=arith_max)
                 interesting_values.mutate_seq_32_bit_interesting(irps_list, index, self.execute)#, skip_null=skip_zero, effector_map=effector_map, arith_max=arith_max)
