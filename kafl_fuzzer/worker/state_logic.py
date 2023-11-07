@@ -437,7 +437,6 @@ class FuzzingStateLogic:
 
             # Arithmetic mutations..
             if det_info["stage"] == "arith":
-                effector_map = det_info.get("eff_map", None)
                 arithmetic.mutate_seq_8_bit_arithmetic(irps_list, index,  self.execute)##, skip_null=skip_zero, effector_map=effector_map, arith_max=arith_max)
                 arithmetic.mutate_seq_16_bit_arithmetic(irps_list, index, self.execute)#, skip_null=skip_zero, effector_map=effector_map, arith_max=arith_max)
                 arithmetic.mutate_seq_32_bit_arithmetic(irps_list, index, self.execute)#, skip_null=skip_zero, effector_map=effector_map, arith_max=arith_max)
