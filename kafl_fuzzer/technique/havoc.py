@@ -185,7 +185,7 @@ def add_insns(irp_list, func):
 
 
 def mutate_random_sequence(irp_list, index, func):
- 
+    # TODO Need to more implement this.
   #  max_insns = 10
     ## delete
     #insns = len(irp_list)
