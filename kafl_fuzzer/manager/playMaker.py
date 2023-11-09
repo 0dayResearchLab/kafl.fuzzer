@@ -12,7 +12,8 @@ class PlayMaker:
 
         if self.use:
             self.toggle = False
-            self.time_limit = time_limit * 60
+            #self.time_limit = time_limit * 60
+            self.time_limit = time_limit
             self.last_find_time = 0
 
             print(f"[+] you playmaker is {self.time_limit}")

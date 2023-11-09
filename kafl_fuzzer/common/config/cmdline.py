@@ -111,7 +111,7 @@ def add_args_fuzzer(parser):
     parser.add_argument('-tc', '--t-check', dest='timeout_check', required=False, action='store_true', help="validate timeouts against hard limit (slower)", default=False)
     parser.add_argument('--kickstart', metavar='<n>', help="kickstart fuzzing with <n> byte random strings (default 256, 0 to disable)", required=False)
     parser.add_argument('--radamsa-path', metavar='<file>', help=hidden('path to radamsa executable'), required=False)
-    parser.add_argument('--maker', dest='play_maker', required=False, metavar='<n>', help="test make after <n> hours", default=None)
+    parser.add_argument('--maker', dest='play_maker', required=False, metavar='<n>', help="test make after <n> seconds", default=None)
 
 # Qemu/Worker-specific launch options
 def add_args_qemu(parser):

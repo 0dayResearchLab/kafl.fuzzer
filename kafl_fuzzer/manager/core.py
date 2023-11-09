@@ -25,7 +25,7 @@ from dynaconf import LazySettings
 
 from kafl_fuzzer.common.util import print_banner
 from kafl_fuzzer.common.self_check import self_check, post_self_check
-from kafl_fuzzer.common.util import prepare_working_dir, copy_seed_files, qemu_sweep, filter_available_cpus, interface_manager
+from kafl_fuzzer.common.util import prepare_working_dir, prepare_dependency_dir, copy_seed_files, copy_dependency_files, qemu_sweep, filter_available_cpus, interface_manager, dependency_manager
 from kafl_fuzzer.common.logger import add_logging_file
 from kafl_fuzzer.manager.manager import ManagerTask
 from kafl_fuzzer.worker.worker import worker_loader
@@ -58,9 +58,11 @@ def start(settings: LazySettings):
 
     workdir   = settings.workdir
     seed_dir   = settings.seed_dir
+    dependency_dir = workdir+"/dependency"
     num_worker = settings.processes
     interface = settings.interface
     call_stack_mode = settings.use_call_stack
+    play_maker = settings.play_maker
 
 
     if call_stack_mode:
@@ -78,14 +80,27 @@ def start(settings: LazySettings):
 
     if not prepare_working_dir(settings):
         logger.error("Failed to prepare working directory. Exit.")
-        return -1;
-
+        return -1
 
 
     if interface:
         interface_manager.load(interface)
         interface_manager.generate(seed_dir)
 
+    if play_maker:
+        logger.info("[+] Preparing dependency folders")
+        if not prepare_dependency_dir(settings, dependency_manager.dependency):
+            logger.error("Failed to prepare working directory. Exit.")
+            return -1
+        #print(dependency_manager.dependency)
+
+        logger.info("[+] copy seed files to dependency directory")
+        copy_dependency_files(workdir,dependency_dir, seed_dir)
+       
+   
+        # if not copy_dependency_files(workdir, seed_dir):
+        #     logger.error("Error when importing seeds. Exit.")
+        #     return 1
     # initialize logger after workdir purge
     # otherwise the file handler created is removed
     add_logging_file(settings)

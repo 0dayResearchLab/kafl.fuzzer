@@ -495,8 +495,9 @@ class FuzzingStateLogic:
         if use_splicing:
             self.stage_update_label("afl_splice")
             havoc.mutate_seq_splice_array(irp_list, index, self.execute, havoc_amount)
-        elif dependency_stage:
-            self.stage_update_label("dependency stage")
+        #elif dependency_stage:
+        elif True:
+            self.stage_update_label("dependency")
             havoc.mutate_random_sequence(irp_list, index, self.execute)
         elif use_argv_mutate:
             self.stage_update_label("argv_mutate")

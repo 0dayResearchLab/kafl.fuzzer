@@ -8,7 +8,7 @@ AFL-style havoc and splicing stage
 """
 
 import glob
-from kafl_fuzzer.common.util import parse_all, parse_payload, read_binary_file, interface_manager, interesting_length
+from kafl_fuzzer.common.util import parse_all, parse_payload, read_binary_file, interface_manager, dependency_manager, interesting_length
 from kafl_fuzzer.common.rand import rand
 from kafl_fuzzer.technique.havoc_handler import *
 import copy
@@ -27,7 +27,7 @@ def load_dict(file_name):
 
 
 def init_havoc(config):
-    global location_corpus
+    global location_corpus,location_dependency
     if config.dict:
         set_dict(load_dict(config.dict))
     # AFL havoc adds these at runtime as soon as available dicts are non-empty
@@ -36,7 +36,7 @@ def init_havoc(config):
         append_handler(havoc_dict_replace)
 
     location_corpus = config.workdir + "/corpus/"
-
+    location_dependency = config.workdir + "/dependency/"
 
 def havoc_range(perf_score):
     max_iterations = int(2*perf_score)
@@ -135,48 +135,68 @@ def replace_insns(irp_list, func):
         new_irp_list.clear()
 
 def add_insns(irp_list, func):
-    files = glob.glob(location_corpus + "/regular/payload_*")
+    last_irp = irp_list[-1]
+    target_ioctl = last_irp.IoControlCode
 
-    max_insns = 12
+    next_ioctl = dependency_manager.get_dependency(target_ioctl)
+    if next_ioctl == None:
+        return -1
+   # logger.info("[+]" + hex(next_ioctl))
+    
+    files = glob.glob(location_dependency + hex(next_ioctl) +"/*")
+    #logger.info(f"[+] {location_dependency + hex(next_ioctl) +'/*'} {len(files)}")
+    max_insns = 10
     rand.shuffle(files)
     retry = 50
+
     new_irp_list = []   
 
     for _ in range(retry):
         #for i in range(rand.int(len(files))):
+        
+        # if len(files) > max_insns:
+        #     limit = max_insns
+           # else:
+        #     limit = len(files)
+        next_file = rand.select(files)
+        next_payload = read_binary_file(next_file)
 
-        if len(files) > max_insns:
-            limit = max_insns
-        else:
-            limit = len(files)
+        appended_target_list = parse_all(next_payload)
 
-        for i in range(limit):
-            target = read_binary_file(files[i])
 
-            appended_target_list = parse_all(target)
-            if len(appended_target_list) > 2:
-                continue
-            for j in range(len(appended_target_list)):
-                new_irp_list.append(appended_target_list[j])
+        for j in range(len(appended_target_list)):
+            new_irp_list.append(appended_target_list[j])
 
+    
+
+        new_irp_list = irp_list + new_irp_list
+        debug_ = []
+        for i in new_irp_list:
+            debug_.append(i.IoControlCode)
+        #print(debug_)
         func(new_irp_list)
         new_irp_list.clear()
+
+    return
+    
+
+    
 
 
 
 def mutate_random_sequence(irp_list, index, func):
  
-    max_insns = 12
+    max_insns = 10
     ## delete
     insns = len(irp_list)
     x = rand.int(10)
-
-    if insns > max_insns and x < 5:
-        delete_insns(irp_list, func)
-    elif insns > max_insns and x < 10:
-        replace_insns(irp_list, func)
-    else:
-        add_insns(irp_list, func)
+    add_insns(irp_list, func)
+    # if insns > max_insns and x < 5:
+    #     delete_insns(irp_list, func)
+    # elif insns > max_insns and x < 10:
+    #     replace_insns(irp_list, func)
+    # else:
+    #     add_insns(irp_list, func)
         
 
 def mutate_length(irp_list, index, func):

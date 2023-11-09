@@ -81,7 +81,7 @@ def add_to_irp_list(target_list, data):
 
         start = start +u32(inbuffer_length) + OUTBUFFER_LENGTH
         target_list.append(IRP(ioctl_code, inbuffer_length, outbuffer_length, payload,command))
-    
+
 def serialize(target_list):
     result = b""
 
@@ -118,15 +118,6 @@ def serialize_sangjun(headers, datas):
     else:
         is_multi_irp = False
     return result, is_multi_irp
-    # try:
-
-    #     for index in range(len(target_list)):
-    #         cur = target_list[index]
-    #         result += cur.Command + cur.IoControlCode + cur.InBuffer_length + cur.OutBuffer_Length  + cur.InBuffer
-    #     return result
-    # except AttributeError:
-    #     print(f"Attribute Erorr :::::::::::::::::::: {cur} {target_list}")
-    #     exit(0)
 
 
 irp_list = []
@@ -167,18 +158,6 @@ def parse_header_and_data(target_list):
         headers += header
         datas += data
     return headers, datas
-        # while len(data) > start:
-        #     command = data[start: start + COMMAND]
-        #     ioctl_code = data[start + COMMAND: start + IOCTL_CODE]
-        #     inbuffer_length = data[start + IOCTL_CODE: start + INBUFFER_LENGTH]
-        #     outbuffer_length = data[start + INBUFFER_LENGTH: start + OUTBUFFER_LENGTH]
-        #     payload = data[start+OUTBUFFER_LENGTH:start+OUTBUFFER_LENGTH + u32(inbuffer_length)]
-
-        #     start = start +u32(inbuffer_length) + OUTBUFFER_LENGTH
-
-        #     sequence.append(IRP(ioctl_code, inbuffer_length, outbuffer_length, payload,command))
-        # return sequence
-
 
 
 
@@ -233,11 +212,10 @@ class Interface:
     def generate(self, seed_dir):
     
         logger.info("[+] preparing seed files with irec result...")
-        import mmh3
-        def hash(x): mmh3.hash(x, signed=False)
+
         for iocode in interface_manager.get_all_codes():
             payload = self.__generateIRP(iocode)
-            with open(seed_dir+f"/{hex(iocode)}_{str(hash(payload))}","wb") as file:
+            with open(seed_dir+f"/{hex(iocode)}","wb") as file:
                 file.write(payload)
         import time
         time.sleep(3)
@@ -249,7 +227,63 @@ class Interface:
 interface_manager = Interface()
 
 
+import json
+from collections import defaultdict  # Correct import statement
+import random
 
+class Dependency:
+    def __init__(self, path):
+        self.dependency = []
+        self.dependency_json = self.load(path)
+    def load(self, path):
+        dependency_json = json.loads(open(path, 'r').read())
+        return dependency_json
+
+    def grounping(self):
+        grouped_data = defaultdict(list)
+
+        # JSON 데이터를 공유하는 메모리 주소 별로 그룹화
+        for key, value in self.dependency_json.items():
+            #print(key, value)
+            for item in value:
+                addr = item["addr"]
+                grouped_data[addr].append(key)
+                break
+     
+        # # 같은 메모리를 공유하는것끼리 리스트에 넣음 #
+        def to_hex(value):  return int(value,16)
+
+        for addr in grouped_data:
+            self.dependency.append(list(map(to_hex,grouped_data[addr])))
+        #print(self.dependency)
+    def get_dependency(self, ioctl):
+        
+        target_index = -1
+
+        for index in range(len(self.dependency)):
+            if ioctl in self.dependency[index]:
+                target_index = index
+                break
+
+        if target_index == -1:
+            return None
+        else:
+            return random.choice(self.dependency[target_index])
+
+        assert(1==2), print("This code never be executed")
+        #random.choice
+        #print(self.dependency)
+            # for i in grouped_data[addr]:
+                
+        # for key, value in self.grouped_data:
+        #     print(key, value)
+        #print(grouped_data)
+
+
+dependency_manager = Dependency("./xref.json")
+dependency_manager.grounping()
+# num = d.get_dependency(2236428)
+# print(hex(num))
 
 
 
@@ -365,6 +399,32 @@ def prepare_working_dir(config):
 
     return True
 
+
+def prepare_dependency_dir(config, dependency_list):
+
+    workdir   = config.workdir
+    purge      = config.purge
+    resume     = config.resume
+
+    folders = ["/dependency"]
+
+    for ele in dependency_list:
+
+        for ioctl_code in ele:
+            folders.append("/dependency/"+hex(ioctl_code))
+
+    try:
+        for folder in folders:
+            os.makedirs(workdir + folder, exist_ok=resume)
+    except FileExistsError:
+        logger.error("Refuse to operate on existing workdir, supply either --purge or --resume.")
+        return False
+    except PermissionError as e:
+        logger.error(str(e))
+        return False
+
+    return True
+
 def copy_seed_files(working_directory, seed_directory):
     if len(os.listdir(seed_directory)) == 0:
         return False
@@ -382,6 +442,40 @@ def copy_seed_files(working_directory, seed_directory):
                     i += 1
                 except PermissionError:
                     logger.error("Skipping seed file %s (permission denied)." % path)
+    return True
+
+
+def copy_dependency_files(working_directory, depend_directory, seed_directory):
+    import glob
+    logger.info(depend_directory+"/*")
+    file_paths = glob.glob(depend_directory+"/*")#"/tmp/kAFL_crash_call_stack.log"
+    logger.info(file_paths)
+    def get_filenames_from_glob(pattern):
+        filenames = [os.path.basename(path) for path in pattern]
+
+        return filenames
+    depend_exist_list = get_filenames_from_glob(file_paths)
+    #logger.critical(depend_exist_list)
+
+    for file_name in depend_exist_list:
+        seed_file_paths = glob.glob(seed_directory+"/*")#"/tmp/kAFL_crash_call_stack.log"
+
+        for idx in range(len(seed_file_paths)):
+            if file_name in seed_file_paths[idx]:
+
+#            path = os.path.join(depend_directory, file_name)
+                copyfile(seed_directory+f"/{file_name}",depend_directory+f"/{file_name}/{file_name}")
+                break
+    # i = 0
+    # for (directory, _, files) in os.walk(seed_directory):
+    #     for f in files:
+    #         path = os.path.join(directory, f)
+    #         if os.path.exists(path):
+    #             try:
+    #                 copyfile(path, working_directory + "/imports/" + "seed_%05d" % i)
+    #                 i += 1
+    #             except PermissionError:
+    #                 logger.error("Skipping seed file %s (permission denied)." % path)
     return True
 
 def print_hprintf(msg):
