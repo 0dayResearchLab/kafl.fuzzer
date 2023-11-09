@@ -496,6 +496,7 @@ class FuzzingStateLogic:
             self.stage_update_label("afl_splice")
             havoc.mutate_seq_splice_array(irp_list, index, self.execute, havoc_amount)
         #elif dependency_stage:
+        # TODO need to revert this
         elif True:
             self.stage_update_label("dependency")
             havoc.mutate_random_sequence(irp_list, index, self.execute)

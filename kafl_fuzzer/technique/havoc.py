@@ -145,7 +145,7 @@ def add_insns(irp_list, func):
     
     files = glob.glob(location_dependency + hex(next_ioctl) +"/*")
     #logger.info(f"[+] {location_dependency + hex(next_ioctl) +'/*'} {len(files)}")
-    max_insns = 10
+    #max_insns = 10
     rand.shuffle(files)
     retry = 50
 
@@ -186,10 +186,10 @@ def add_insns(irp_list, func):
 
 def mutate_random_sequence(irp_list, index, func):
  
-    max_insns = 10
+  #  max_insns = 10
     ## delete
-    insns = len(irp_list)
-    x = rand.int(10)
+    #insns = len(irp_list)
+   # x = rand.int(10)
     add_insns(irp_list, func)
     # if insns > max_insns and x < 5:
     #     delete_insns(irp_list, func)
