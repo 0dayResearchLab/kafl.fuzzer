@@ -19,18 +19,10 @@ def mutate_seq_walking_bits(irp_list, index, func, skip_null=False, effector_map
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        start = rand.int(((end - 1) // MAX_WALKING_BITS_SIZE)) * MAX_WALKING_BITS_SIZE
         end = min(end, MAX_WALKING_BITS_SIZE)
 
     for i in range(start, end):
         orig = data[i]
-
-        # if effector_map:
-        #     if not effector_map[i]:
-        #         continue
-        # if skip_null and not data[i]:
-        #     continue
-
         for j in range(8):
             data[i] ^= 0x80 >> j
             func(irp_list, label="afl_flip_1/1")
@@ -47,7 +39,6 @@ def mutate_seq_two_walking_bits(irp_list, index, func, skip_null=False, effector
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        start = rand.int(((end - 1) // MAX_WALKING_BITS_SIZE)) * MAX_WALKING_BITS_SIZE
         end = min(end, MAX_WALKING_BITS_SIZE)
 
 
@@ -100,18 +91,10 @@ def mutate_seq_four_walking_bits(irp_list, index, func, skip_null=False, effecto
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        start = rand.int(((end - 1) // MAX_WALKING_BITS_SIZE)) * MAX_WALKING_BITS_SIZE
         end = min(end, MAX_WALKING_BITS_SIZE)
 
 
     for i in range(start, end -1):
-
-        # if effector_map:
-        #     if effector_map[i:i+2] == bytes(2):
-        #         continue
-
-        # if skip_null and data[i:i+2] == bytes(2):
-        #     continue
 
         orig = data[i:i+2]
 
@@ -162,11 +145,7 @@ def mutate_seq_walking_byte(irp_list, index, func, effector_map=None, limiter_ma
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        start = rand.int(((end - 1) // MAX_WALKING_BITS_SIZE)) * MAX_WALKING_BITS_SIZE
         end = min(end, MAX_WALKING_BITS_SIZE)
-
-    # if effector_map:
-    #     orig_bitmap, _ = func(data)
 
     for i in range(start, end):
         if limiter_map:
@@ -193,20 +172,12 @@ def mutate_seq_two_walking_bytes(irp_list, index, func, effector_map=None, skip_
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        start = rand.int(((end - 1) // MAX_WALKING_BITS_SIZE)) * MAX_WALKING_BITS_SIZE
         end = min(end, MAX_WALKING_BITS_SIZE)
 
     if len(data) <= 1:
         return
 
     for i in range(start, end-1):
-        # if effector_map:
-        #     if effector_map[i:i+2] == bytes(2):
-        #         continue
-
-        # if skip_null and data[i:i+2] == bytes(2):
-        #     continue
-
         data[i+0] ^= 0xFF
         data[i+1] ^= 0xFF
         func(irp_list, label="afl_flip_8/2")
@@ -224,7 +195,6 @@ def mutate_seq_four_walking_bytes(irp_list, index, func, effector_map=None, skip
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        start = rand.int(((end - 1) // MAX_WALKING_BITS_SIZE)) * MAX_WALKING_BITS_SIZE
         end = min(end, MAX_WALKING_BITS_SIZE)
 
     if len(data) <= 3:

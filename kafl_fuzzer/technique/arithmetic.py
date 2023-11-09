@@ -20,7 +20,6 @@ def mutate_seq_8_bit_arithmetic(irp_list, index, func, skip_null=False, effector
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_ARITHMETIC_SIZE:
-        start = rand.int(((end - 1) // MAX_ARITHMETIC_SIZE)) * MAX_ARITHMETIC_SIZE
         end = min(end, MAX_ARITHMETIC_SIZE)
 
     label="afl_arith_1"
@@ -60,7 +59,6 @@ def mutate_seq_16_bit_arithmetic(irp_list, index, func, skip_null=False, effecto
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_ARITHMETIC_SIZE:
-        start = rand.int(((end - 1) // MAX_ARITHMETIC_SIZE)) * MAX_ARITHMETIC_SIZE
         end = min(end, MAX_ARITHMETIC_SIZE)
 
     label="afl_arith_2"
@@ -113,7 +111,6 @@ def mutate_seq_32_bit_arithmetic(irp_list, index, func, skip_null=False, effecto
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_ARITHMETIC_SIZE:
-        start = rand.int(((end - 1) // MAX_ARITHMETIC_SIZE)) * MAX_ARITHMETIC_SIZE
         end = min(end, MAX_ARITHMETIC_SIZE)
 
     label="afl_arith_4"

@@ -446,8 +446,7 @@ def copy_seed_files(working_directory, seed_directory):
 
 def copy_dependency_files(working_directory, depend_directory, seed_directory):
     import glob
-    logger.info(depend_directory+"/*")
-    file_paths = glob.glob(depend_directory+"/*")#"/tmp/kAFL_crash_call_stack.log"
+    file_paths = glob.glob(depend_directory+"/*")
     logger.info(file_paths)
     def get_filenames_from_glob(pattern):
         filenames = [os.path.basename(path) for path in pattern]
@@ -457,24 +456,12 @@ def copy_dependency_files(working_directory, depend_directory, seed_directory):
     #logger.critical(depend_exist_list)
 
     for file_name in depend_exist_list:
-        seed_file_paths = glob.glob(seed_directory+"/*")#"/tmp/kAFL_crash_call_stack.log"
+        seed_file_paths = glob.glob(seed_directory+"/*")
 
         for idx in range(len(seed_file_paths)):
             if file_name in seed_file_paths[idx]:
-
-#            path = os.path.join(depend_directory, file_name)
                 copyfile(seed_directory+f"/{file_name}",depend_directory+f"/{file_name}/{file_name}")
                 break
-    # i = 0
-    # for (directory, _, files) in os.walk(seed_directory):
-    #     for f in files:
-    #         path = os.path.join(directory, f)
-    #         if os.path.exists(path):
-    #             try:
-    #                 copyfile(path, working_directory + "/imports/" + "seed_%05d" % i)
-    #                 i += 1
-    #             except PermissionError:
-    #                 logger.error("Skipping seed file %s (permission denied)." % path)
     return True
 
 def print_hprintf(msg):
