@@ -92,15 +92,10 @@ def start(settings: LazySettings):
         if not prepare_dependency_dir(settings, dependency_manager.dependency):
             logger.error("Failed to prepare working directory. Exit.")
             return -1
-        #print(dependency_manager.dependency)
-
         logger.info("[+] copy seed files to dependency directory")
         copy_dependency_files(workdir,dependency_dir, seed_dir)
        
-   
-        # if not copy_dependency_files(workdir, seed_dir):
-        #     logger.error("Error when importing seeds. Exit.")
-        #     return 1
+
     # initialize logger after workdir purge
     # otherwise the file handler created is removed
     add_logging_file(settings)

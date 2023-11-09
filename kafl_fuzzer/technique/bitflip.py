@@ -8,7 +8,6 @@ AFL-style bitflip mutations (deterministic stage).
 """
 
 from kafl_fuzzer.common.util import MAX_WALKING_BITS_SIZE
-from kafl_fuzzer.common.rand import rand
 
 def mutate_seq_walking_bits(irp_list, index, func, skip_null=False, effector_map=None):
     data = irp_list[index].InBuffer
