@@ -90,7 +90,10 @@ class QueueNode:
     def set_payload(self, payload, write=True):
         self.set_payload_len(len(payload), write=False)
         atomic_write(QueueNode.__get_payload_filename(self.workdir, self.get_exit_reason(), self.get_id()), payload)
-
+        # TODO Add new payload files to dependency folders when play makers on
+        # settings.play_maker -> can know this options is ON
+        # Need to Exists check first
+        
     def get_payload_len(self):
         return self.node_struct["payload_len"]
 
