@@ -30,6 +30,9 @@ def u32(x, debug=None):
     
 def p32(x): return struct.pack('<I', x)
 
+
+MAX_PAYLOAD_LEN = 2**17 - 0x100
+
 COMMAND = 4
 IOCTL_CODE = 8
 INBUFFER_LENGTH = 12
@@ -54,6 +57,7 @@ interesting_length = [1<<i for i in range(20)]
 
 
 class IRP:
+    '''This code from kirasys's IRPT'''
     def __init__(self, IoControlCode=0, InBuffer_length=0, OutBuffer_length=0, InBuffer=b'', Command=0):
         self.Command = Command
         self.IoControlCode = u32(IoControlCode)
@@ -170,6 +174,7 @@ def to_range(rg):
 
 
 class Interface:
+    '''This code from kirasys's IRPT'''
     def __init__(self):
         self.interface = {}
 
@@ -268,22 +273,22 @@ class Dependency:
         if target_index == -1:
             return None
         else:
-            return random.choice(self.dependency[target_index])
+
+            while True:
+                num = random.choice(self.dependency[target_index])
+                if num==ioctl:
+                    continue
+                else:
+                    break
+            return num
 
         assert(1==2), print("This code never be executed")
-        #random.choice
-        #print(self.dependency)
-            # for i in grouped_data[addr]:
-                
-        # for key, value in self.grouped_data:
-        #     print(key, value)
-        #print(grouped_data)
+
 
 
 dependency_manager = Dependency("./xref.json")
 dependency_manager.grounping()
-# num = d.get_dependency(2236428)
-# print(hex(num))
+
 
 
 
@@ -447,7 +452,6 @@ def copy_seed_files(working_directory, seed_directory):
 def copy_dependency_files(working_directory, depend_directory, seed_directory):
     import glob
     file_paths = glob.glob(depend_directory+"/*")
-    logger.info(file_paths)
     def get_filenames_from_glob(pattern):
         filenames = [os.path.basename(path) for path in pattern]
 

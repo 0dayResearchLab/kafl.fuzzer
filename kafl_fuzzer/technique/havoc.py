@@ -8,7 +8,7 @@ AFL-style havoc and splicing stage
 """
 
 import glob
-from kafl_fuzzer.common.util import parse_all, parse_payload, read_binary_file, interface_manager, dependency_manager, interesting_length
+from kafl_fuzzer.common.util import parse_all, parse_payload, read_binary_file, interface_manager, dependency_manager, interesting_length, MAX_PAYLOAD_LEN
 from kafl_fuzzer.common.rand import rand
 from kafl_fuzzer.technique.havoc_handler import *
 import copy
@@ -102,35 +102,39 @@ def mutate_seq_splice_array(irp_list, index, func, max_iterations, resize=False)
                                resize=resize)
 
 def delete_insns(irp_list, func):
-    files = glob.glob(location_corpus + "/regular/payload_*")
-
-
-    rand.shuffle(files)
-    retry = 50
+    retry = 10
     new_irp_list = []   
 
     for _ in range(retry):
         new_irp_list = copy.deepcopy(irp_list)
-        new_irp_list.pop(rand.int(len(new_irp_list)))
+        pos = rand.int(len(new_irp_list))
+        new_irp_list.pop(pos)
         func(new_irp_list)
         new_irp_list.clear()
 
 def replace_insns(irp_list, func):
-    files = glob.glob(location_corpus + "/regular/payload_*")
+    last_irp = irp_list[-1]
+    target_ioctl = last_irp.IoControlCode
 
+    next_ioctl = dependency_manager.get_dependency(target_ioctl)
+    if next_ioctl == None:
+        return -1
 
+    files = glob.glob(location_dependency + hex(next_ioctl) +"/*")
     rand.shuffle(files)
-    retry = 50
+    retry = 10
+
     new_irp_list = []   
 
     for _ in range(retry):
         new_irp_list = copy.deepcopy(irp_list)
-        new_irp_list.pop(rand.int(len(new_irp_list)))
 
         target = read_binary_file(rand.select(files))
         appended_target_list = parse_all(target)
         new_irp_list.append(rand.select(appended_target_list))
 
+        pos = rand.int(len(irp_list))
+        new_irp_list = irp_list[:pos]+ new_irp_list.pop() + irp_list[pos+1:]
         func(new_irp_list)
         new_irp_list.clear()
 
@@ -141,39 +145,21 @@ def add_insns(irp_list, func):
     next_ioctl = dependency_manager.get_dependency(target_ioctl)
     if next_ioctl == None:
         return -1
-   # logger.info("[+]" + hex(next_ioctl))
-    
-    files = glob.glob(location_dependency + hex(next_ioctl) +"/*")
-    #logger.info(f"[+] {location_dependency + hex(next_ioctl) +'/*'} {len(files)}")
-    #max_insns = 10
-    rand.shuffle(files)
-    retry = 50
 
+    files = glob.glob(location_dependency + hex(next_ioctl) +"/*")
+    retry = 1000
     new_irp_list = []   
 
     for _ in range(retry):
-        #for i in range(rand.int(len(files))):
-        
-        # if len(files) > max_insns:
-        #     limit = max_insns
-           # else:
-        #     limit = len(files)
         next_file = rand.select(files)
         next_payload = read_binary_file(next_file)
 
         appended_target_list = parse_all(next_payload)
 
-
-        for j in range(len(appended_target_list)):
-            new_irp_list.append(appended_target_list[j])
-
-    
+        # just append 1 targets
+        new_irp_list.append(rand.select(appended_target_list))
 
         new_irp_list = irp_list + new_irp_list
-        debug_ = []
-        for i in new_irp_list:
-            debug_.append(i.IoControlCode)
-        #print(debug_)
         func(new_irp_list)
         new_irp_list.clear()
 
@@ -186,14 +172,11 @@ def add_insns(irp_list, func):
 
 def mutate_random_sequence(irp_list, index, func):
     # TODO Need to more implement this.
-  #  max_insns = 10
-    ## delete
-    #insns = len(irp_list)
-   # x = rand.int(10)
+#    x = rand.int(10)
     add_insns(irp_list, func)
-    # if insns > max_insns and x < 5:
+    # if x < 2 and len(irp_list) >= 3:
     #     delete_insns(irp_list, func)
-    # elif insns > max_insns and x < 10:
+    # elif x < 4 and len(irp_list) >=3:
     #     replace_insns(irp_list, func)
     # else:
     #     add_insns(irp_list, func)
@@ -247,8 +230,8 @@ def mutate_length(irp_list, index, func):
                 #candidates = rand.int()#get_interesting_list(inlength)
                 chosen = rand.int(inlength) #rand.select(candidates)
             
-            if chosen > 131068-100:
-                chosen = 131068-100
+            if chosen > MAX_PAYLOAD_LEN:
+                chosen = MAX_PAYLOAD_LEN
         return chosen
     
 

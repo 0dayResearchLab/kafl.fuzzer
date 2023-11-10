@@ -239,24 +239,25 @@ class FuzzingStateLogic:
             if havoc_redqueen:
                 self.__perform_rq_dict(metadata)
 
-
-            for index in range(len(irp_list)):
-                if havoc_afl:
-                    havoc_start_time = time.time()
-                    self.__perform_havoc(irp_list, index, metadata, use_splicing=False)
-                    self.havoc_time += time.time() - havoc_start_time
-
-                if havoc_splice:
-                    splice_start_time = time.time()
-                    self.__perform_havoc(irp_list, index, metadata, use_splicing=True)
-                    self.splice_time += time.time() - splice_start_time
-
-                if havoc_argv_mutate and self.config.interface:
-                    self.__perform_havoc(irp_list, index, metadata, use_argv_mutate=True)
-            if self.worker.play_maker_mode:            
+            if self.worker.play_maker_mode:
                 for index in range(len(irp_list)):
                     if havoc_dependency:
                         self.__perform_havoc(irp_list, index, metadata, dependency_stage=True)
+            else:
+                for index in range(len(irp_list)):
+                    if havoc_afl:
+                        havoc_start_time = time.time()
+                        self.__perform_havoc(irp_list, index, metadata, use_splicing=False)
+                        self.havoc_time += time.time() - havoc_start_time
+
+                    if havoc_splice:
+                        splice_start_time = time.time()
+                        self.__perform_havoc(irp_list, index, metadata, use_splicing=True)
+                        self.splice_time += time.time() - splice_start_time
+
+                    if havoc_argv_mutate and self.config.interface:
+                        self.__perform_havoc(irp_list, index, metadata, use_argv_mutate=True)
+                
 
         self.logger.debug("HAVOC times: afl: %.1f, splice: %.1f, grim: %.1f, rdmsa: %.1f", self.havoc_time, self.splice_time, self.grimoire_time, self.radamsa_time)
 
@@ -495,9 +496,7 @@ class FuzzingStateLogic:
         if use_splicing:
             self.stage_update_label("afl_splice")
             havoc.mutate_seq_splice_array(irp_list, index, self.execute, havoc_amount)
-        #elif dependency_stage:
-        # TODO need to revert this
-        elif True:
+        elif dependency_stage:
             self.stage_update_label("dependency")
             havoc.mutate_random_sequence(irp_list, index, self.execute)
         elif use_argv_mutate:
