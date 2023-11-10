@@ -171,15 +171,14 @@ def add_insns(irp_list, func):
 
 
 def mutate_random_sequence(irp_list, index, func):
-    # TODO Need to more implement this.
-#    x = rand.int(10)
-    add_insns(irp_list, func)
-    # if x < 2 and len(irp_list) >= 3:
-    #     delete_insns(irp_list, func)
-    # elif x < 4 and len(irp_list) >=3:
-    #     replace_insns(irp_list, func)
-    # else:
-    #     add_insns(irp_list, func)
+    x = rand.int(10)
+#    add_insns(irp_list, func)
+    if x < 2 and len(irp_list) >= 3:
+        delete_insns(irp_list, func)
+    elif x < 4 and len(irp_list) >=3:
+        replace_insns(irp_list, func)
+    else:
+        add_insns(irp_list, func)
         
 
 def mutate_length(irp_list, index, func):
