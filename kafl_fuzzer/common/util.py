@@ -237,12 +237,17 @@ from collections import defaultdict  # Correct import statement
 import random
 
 class Dependency:
-    def __init__(self, path):
+    def __init__(self):
         self.dependency = []
-        self.dependency_json = self.load(path)
-    def load(self, path):
-        dependency_json = json.loads(open(path, 'r').read())
-        return dependency_json
+        self.dependency_json = None#self.load(path)
+        self.path = None
+
+    def enroll_path(self, path):
+        self.path = path
+
+    def load(self):
+        dependency_json = json.loads(open(self.path, 'r').read())
+        self.dependency_json = dependency_json
 
     def grounping(self):
         grouped_data = defaultdict(list)
@@ -286,13 +291,7 @@ class Dependency:
 
 
 
-dependency_manager = Dependency("./xref.json")
-dependency_manager.grounping()
-
-
-
-
-
+dependency_manager = Dependency()
 
 
 

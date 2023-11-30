@@ -25,7 +25,7 @@ from dynaconf import LazySettings
 
 from kafl_fuzzer.common.util import print_banner
 from kafl_fuzzer.common.self_check import self_check, post_self_check
-from kafl_fuzzer.common.util import prepare_working_dir, prepare_dependency_dir, copy_seed_files, copy_dependency_files, qemu_sweep, filter_available_cpus, interface_manager, dependency_manager
+from kafl_fuzzer.common.util import prepare_working_dir, prepare_dependency_dir, copy_seed_files, copy_dependency_files, qemu_sweep, filter_available_cpus, interface_manager
 from kafl_fuzzer.common.logger import add_logging_file
 from kafl_fuzzer.manager.manager import ManagerTask
 from kafl_fuzzer.worker.worker import worker_loader
@@ -89,6 +89,10 @@ def start(settings: LazySettings):
 
     if play_maker:
         logger.info("[+] Preparing dependency folders")
+        from kafl_fuzzer.common.util import dependency_manager
+        dependency_manager.enroll_path("./xref.json")
+        dependency_manager.load()
+        dependency_manager.grounping()
         if not prepare_dependency_dir(settings, dependency_manager.dependency):
             logger.error("Failed to prepare working directory. Exit.")
             return -1
