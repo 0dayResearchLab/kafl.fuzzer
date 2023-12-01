@@ -176,10 +176,11 @@ class FuzzingStateLogic:
     #         self.execute(payload, label="kickstart")
 
     def handle_initial(self, metadata):
-        # if self.config.trace_cb:
-        #     self.stage_update_label("trace")
-        #     self.worker.trace_payload(payload, metadata)
-
+        if self.config.trace_cb:
+            self.stage_update_label("trace")
+            payload, is_multi_irp = serialize(irp_list)
+            self.worker.trace_payload(payload, metadata)
+            
         self.stage_update_label("calibrate")
         # Update input performance using multiple randomized executions
         # Scheduler will de-prioritize execution of very slow nodes..

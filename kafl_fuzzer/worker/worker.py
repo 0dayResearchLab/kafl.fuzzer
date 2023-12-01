@@ -15,6 +15,7 @@ import time
 import signal
 import sys
 import shutil
+import tempfile
 import logging
 import lz4.frame as lz4
 
@@ -441,6 +442,13 @@ class WorkerTask:
 
                 stable, runtime = self.quick_validate(data, exec_res, trace=trace_pt)
                 exec_res.performance = (exec_res.performance + runtime)/2
+
+                if trace_pt and stable:
+                    trace_in = "%s/pt_trace_dump_%d" % (self.config.workdir, self.pid)
+                    if os.path.exists(trace_in):
+                        with tempfile.NamedTemporaryFile(delete=False,dir=self.config.workdir + "/traces") as f:
+                            shutil.move(trace_in, f.name)
+                            info['pt_dump'] = f.name
 
                 if not stable:
                     # TODO: auto-throttle persistent runs based on funky rate?
