@@ -20,7 +20,7 @@ def mutate_seq_8_bit_interesting(irp_list, index, func, skip_null=False, effecto
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_INTERESTING_SIZE:
-        end = min(end, MAX_INTERESTING_SIZE)
+        end = MAX_INTERESTING_SIZE
 
     label="afl_int_1"
     for i in range(start, end):
@@ -53,7 +53,7 @@ def mutate_seq_16_bit_interesting(irp_list, index, func, skip_null=False, effect
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_INTERESTING_SIZE:
-        end = min(end, MAX_INTERESTING_SIZE)
+        end = MAX_INTERESTING_SIZE
 
     label="afl_int_2"
     for i in range(start, end - 1):
@@ -97,7 +97,7 @@ def mutate_seq_32_bit_interesting(irp_list, index, func, skip_null=False, effect
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_INTERESTING_SIZE:
-        end = min(end, MAX_INTERESTING_SIZE)
+        end = MAX_INTERESTING_SIZE
 
     label="afl_int_4"
     for i in range(start, end - 3):

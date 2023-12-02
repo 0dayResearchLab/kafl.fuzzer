@@ -30,7 +30,7 @@ def get_args():
     parser.add_argument('-o', help='output file name')
     return parser.parse_args()
 
-def write_file(trace_result):
+def write_file(trace_result, output_name):
     with open(output_name, 'a') as f:
         for r in trace_result:
             f.write(f'{r}\n')

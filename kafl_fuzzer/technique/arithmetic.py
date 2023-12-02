@@ -20,7 +20,7 @@ def mutate_seq_8_bit_arithmetic(irp_list, index, func, skip_null=False, effector
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_ARITHMETIC_SIZE:
-        end = min(end, MAX_ARITHMETIC_SIZE)
+        end = MAX_ARITHMETIC_SIZE
 
     label="afl_arith_1"
     for i in range(start,end):
@@ -59,7 +59,7 @@ def mutate_seq_16_bit_arithmetic(irp_list, index, func, skip_null=False, effecto
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_ARITHMETIC_SIZE:
-        end = min(end, MAX_ARITHMETIC_SIZE)
+        end = MAX_ARITHMETIC_SIZE
 
     label="afl_arith_2"
     for i in range(start, end - 1):
@@ -111,7 +111,7 @@ def mutate_seq_32_bit_arithmetic(irp_list, index, func, skip_null=False, effecto
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_ARITHMETIC_SIZE:
-        end = min(end, MAX_ARITHMETIC_SIZE)
+        end = MAX_ARITHMETIC_SIZE
 
     label="afl_arith_4"
     for i in range(start, end - 3):

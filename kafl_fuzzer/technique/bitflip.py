@@ -18,7 +18,7 @@ def mutate_seq_walking_bits(irp_list, index, func, skip_null=False, effector_map
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        end = min(end, MAX_WALKING_BITS_SIZE)
+        end = MAX_WALKING_BITS_SIZE
 
     for i in range(start, end):
         orig = data[i]
@@ -38,7 +38,7 @@ def mutate_seq_two_walking_bits(irp_list, index, func, skip_null=False, effector
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        end = min(end, MAX_WALKING_BITS_SIZE)
+        end = MAX_WALKING_BITS_SIZE
 
 
     for i in range(start, end  - 1):
@@ -90,7 +90,7 @@ def mutate_seq_four_walking_bits(irp_list, index, func, skip_null=False, effecto
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        end = min(end, MAX_WALKING_BITS_SIZE)
+        end = MAX_WALKING_BITS_SIZE
 
 
     for i in range(start, end -1):
@@ -144,7 +144,7 @@ def mutate_seq_walking_byte(irp_list, index, func, effector_map=None, limiter_ma
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        end = min(end, MAX_WALKING_BITS_SIZE)
+        end = MAX_WALKING_BITS_SIZE
 
     for i in range(start, end):
         if limiter_map:
@@ -171,7 +171,7 @@ def mutate_seq_two_walking_bytes(irp_list, index, func, effector_map=None, skip_
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        end = min(end, MAX_WALKING_BITS_SIZE)
+        end = MAX_WALKING_BITS_SIZE
 
     if len(data) <= 1:
         return
@@ -194,7 +194,7 @@ def mutate_seq_four_walking_bytes(irp_list, index, func, effector_map=None, skip
     # limit walking bits up to MAX_WALKING_BITS_SIZE.
     start, end = 0, InBufferLength
     if end > MAX_WALKING_BITS_SIZE:
-        end = min(end, MAX_WALKING_BITS_SIZE)
+        end = MAX_WALKING_BITS_SIZE
 
     if len(data) <= 3:
         return
