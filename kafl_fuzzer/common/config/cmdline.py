@@ -105,7 +105,7 @@ def add_args_fuzzer(parser):
     parser.add_argument('--redqueen-hammer', required=False, action='store_true', help=hidden('enable Redqueen jump table hammering'), default=False)
     parser.add_argument('--redqueen-simple', required=False, action='store_true', help=hidden('do not ignore simple matches in Redqueen'), default=False)
     parser.add_argument('--cpu-offset', metavar='<n>', help="start CPU pinning at offset <n>", required=False)
-    parser.add_argument('--abort-time', metavar='<n>', help="exit after <n> hours", default=None)
+    parser.add_argument('--abort-time', metavar='<n>', help="exit after <n> minutes", default=None)
     parser.add_argument('--abort-exec', metavar='<n>', help="exit after max <n> executions", default=None)
     parser.add_argument('-ts', '--t-soft', dest='timeout_soft', required=False, metavar='<n>', help="soft execution timeout (in seconds)")
     parser.add_argument('-tc', '--t-check', dest='timeout_check', required=False, action='store_true', help="validate timeouts against hard limit (slower)", default=False)

@@ -143,7 +143,8 @@ class ManagerTask:
         n_limit = self.config.abort_exec
 
         if t_limit:
-            if t_limit*3600 < time.time() - self.statistics.data['start_time']:
+            # t_limit is minutes count
+            if t_limit*60 < time.time() - self.statistics.data['start_time']:
                 raise SystemExit("Exit on timeout.")
         if n_limit:
             if n_limit < self.statistics.data['total_execs']:
