@@ -18,9 +18,3 @@
 - **Ubuntu:** The installation and tutorials are
   tested for recent Ubuntu 20.04.6 LTS.
 
-## How to use
-```
-aaa
-aaaa
-aaa
-```
