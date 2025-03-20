@@ -134,7 +134,7 @@ def replace_insns(irp_list, func):
         new_irp_list.append(rand.select(appended_target_list))
 
         pos = rand.int(len(irp_list))
-        new_irp_list = irp_list[:pos]+ new_irp_list.pop() + irp_list[pos+1:]
+        new_irp_list = irp_list[:pos]+ new_irp_list + irp_list[pos+1:]
         func(new_irp_list)
         new_irp_list.clear()
 
