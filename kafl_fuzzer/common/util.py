@@ -279,7 +279,7 @@ class Dependency:
             return None
         else:
 
-            while True:
+            for _ in range(100):
                 num = random.choice(self.dependency[target_index])
                 if num==ioctl:
                     continue
