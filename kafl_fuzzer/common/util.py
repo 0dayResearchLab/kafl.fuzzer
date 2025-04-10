@@ -216,7 +216,7 @@ class Interface:
     
     def generate(self, seed_dir):
     
-        logger.info("[+] preparing seed files with irec result...")
+        logger.info("[+] preparing seed files with angrPT result...")
 
         for iocode in interface_manager.get_all_codes():
             payload = self.__generateIRP(iocode)
