@@ -1,4 +1,4 @@
-Metadata-Version: 1.2
+Metadata-Version: 2.1
 Name: kafl-fuzzer
 Version: 0.6
 Summary: kAFL/Nyx Kernel Fuzzer
@@ -6,7 +6,6 @@ Home-page: https://github.com/IntelLabs/kAFL
 Maintainer: Steffen Schulz
 Maintainer-email: steffen.schulz@intel.com
 License: UNKNOWN
-Description: UNKNOWN
 Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Environment :: Console
@@ -16,3 +15,7 @@ Classifier: License :: OSI Approved :: GNU Affero General Public License v3
 Classifier: Operating System :: POSIX :: Linux
 Classifier: Programming Language :: Python
 Classifier: Topic :: Security
+License-File: LICENSE.md
+
+UNKNOWN
+

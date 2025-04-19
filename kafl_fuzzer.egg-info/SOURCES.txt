@@ -1,10 +1,11 @@
+LICENSE.md
 README.md
 setup.cfg
 setup.py
 kafl_fuzzer/__init__.py
 kafl_fuzzer/__main__.py
+kafl_fuzzer/logging.yaml
 kafl_fuzzer/mcat.py
-kafl_fuzzer/test.py
 kafl_fuzzer.egg-info/PKG-INFO
 kafl_fuzzer.egg-info/SOURCES.txt
 kafl_fuzzer.egg-info/dependency_links.txt
@@ -19,10 +20,9 @@ kafl_fuzzer/common/self_check.py
 kafl_fuzzer/common/util.py
 kafl_fuzzer/common/config/__init__.py
 kafl_fuzzer/common/config/cmdline.py
+kafl_fuzzer/common/config/default_settings.yaml
 kafl_fuzzer/common/config/settings.py
 kafl_fuzzer/coverage/__init__.py
-kafl_fuzzer/debug/__init__.py
-kafl_fuzzer/debug/core.py
 kafl_fuzzer/gui/__init__.py
 kafl_fuzzer/manager/__init__.py
 kafl_fuzzer/manager/bitmap.py
@@ -30,6 +30,7 @@ kafl_fuzzer/manager/communicator.py
 kafl_fuzzer/manager/core.py
 kafl_fuzzer/manager/manager.py
 kafl_fuzzer/manager/node.py
+kafl_fuzzer/manager/playMaker.py
 kafl_fuzzer/manager/queue.py
 kafl_fuzzer/manager/scheduler.py
 kafl_fuzzer/manager/statistics.py
@@ -41,14 +42,10 @@ kafl_fuzzer/plot/__init__.py
 kafl_fuzzer/technique/__init__.py
 kafl_fuzzer/technique/arithmetic.py
 kafl_fuzzer/technique/bitflip.py
-kafl_fuzzer/technique/grimoire_inference.py
-kafl_fuzzer/technique/grimoire_mutations.py
 kafl_fuzzer/technique/havoc.py
 kafl_fuzzer/technique/havoc_handler.py
 kafl_fuzzer/technique/helper.py
 kafl_fuzzer/technique/interesting_values.py
-kafl_fuzzer/technique/radamsa.py
-kafl_fuzzer/technique/trim.py
 kafl_fuzzer/technique/redqueen/__init__.py
 kafl_fuzzer/technique/redqueen/cmp.py
 kafl_fuzzer/technique/redqueen/colorize.py
@@ -60,7 +57,6 @@ kafl_fuzzer/technique/redqueen/parser.py
 kafl_fuzzer/technique/redqueen/workdir.py
 kafl_fuzzer/tests/__init__.py
 kafl_fuzzer/tests/helper.py
-kafl_fuzzer/tests/redqueen_mut.py
 kafl_fuzzer/tests/test_deterministic.py
 kafl_fuzzer/tests/test_havoc_handler.py
 kafl_fuzzer/tests/test_random.py
