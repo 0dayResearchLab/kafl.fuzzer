@@ -25,7 +25,6 @@ def load_dict(file_name):
     f.close()
     return dict_entries
 
-
 def init_havoc(config):
     global location_corpus,location_dependency
     if config.dict:
@@ -45,7 +44,6 @@ def havoc_range(perf_score):
         max_iterations = AFL_HAVOC_MIN
 
     return max_iterations
-
 
 def mutate_seq_havoc_array(irp_list, index, func, max_iterations, resize=False):
     # if resize:
@@ -71,7 +69,6 @@ def mutate_seq_havoc_array(irp_list, index, func, max_iterations, resize=False):
             irp_list[index].InBuffer = data
 
             func(irp_list)
-
 
 def mutate_seq_splice_array(irp_list, index, func, max_iterations, resize=False):
     global location_corpus
@@ -164,11 +161,6 @@ def add_insns(irp_list, func):
         new_irp_list.clear()
 
     return
-    
-
-    
-
-
 
 def mutate_random_sequence(irp_list, index, func):
     x = rand.int(10)
@@ -179,7 +171,6 @@ def mutate_random_sequence(irp_list, index, func):
         replace_insns(irp_list, func)
     else:
         add_insns(irp_list, func)
-        
 
 def mutate_length(irp_list, index, func):
 
@@ -233,24 +224,22 @@ def mutate_length(irp_list, index, func):
                 chosen = MAX_PAYLOAD_LEN
         return chosen
     
-
     retry = 8
 
     for _ in range(retry):
         chosen = get_valid_length("InBuffer",IoControlCode)
         if chosen is not None:
-            target.InBuffer_length = chosen
-
+        
             if chosen > target.InBuffer_length:
-                target.InBuffer.ljust(chosen,b"\xff")
+                target.InBuffer = target.InBuffer.ljust(chosen, b"\xff")
             else:
                 target.InBuffer = target.InBuffer[:chosen]
 
+            target.InBuffer_length = chosen
 
         chosen = get_valid_length("OutBuffer",IoControlCode)
         if chosen is not None:
             target.OutBuffer_length = chosen
-
 
         func(irp_list)
 
