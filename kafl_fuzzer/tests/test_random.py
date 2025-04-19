@@ -8,11 +8,9 @@ Test kAFL rand() wrapper / coin toss
 import struct
 import timeit
 import random
-from binascii import hexlify
 
 from kafl_fuzzer.technique.helper import rand
 from kafl_fuzzer.common.util import IRP
-from kafl_fuzzer.tests.helper import ham_distance
 
 ITERATIONS = 5000
 

@@ -1,17 +1,12 @@
 import struct
-import os
 import pytest
-from binascii import hexlify
 from kafl_fuzzer.technique.havoc import (
     mutate_seq_havoc_array,
     mutate_seq_splice_array,
     mutate_random_sequence,
-    mutate_length,
-    init_havoc
+    mutate_length
 )
 from kafl_fuzzer.common.util import IRP, interface_manager
-from kafl_fuzzer.tests.helper import ham_distance
-from kafl_fuzzer.technique.helper import rand
 import kafl_fuzzer.technique.havoc as havoc
 
 # Setup required for splice and dependency tests

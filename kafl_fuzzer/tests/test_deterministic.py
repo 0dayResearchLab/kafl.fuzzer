@@ -157,49 +157,11 @@ def assert_bitflip_invariants(func, flipped_bits, loops, skips, irp_list):
                 if not skip_null and not eff_map:
                     assert(calls == loops * length - skips)
 
-# def assert_bitflip_invariants(func, flipped_bits, loops, skips, irp_list, index):
-#     """
-#     Verifies bitflip mutators using IRP structure.
-#     Ensures each mutation flips the expected number of bits, and the IRP input is restored.
-#     """
-
-#     original = irp_list[index].InBuffer[:]
-#     length = irp_list[index].InBuffer_length
-
-#     for skip_null in [False, True]:
-#         for use_eff_map in [True, False]:
-#             eff_map = generate_effector_map(length) if use_eff_map else None
-
-#             calls = 0
-
-#             def verifier(irp_list, label=None):
-#                 outdata = irp_list[index].InBuffer
-#                 nonlocal calls
-#                 calls += 1
-
-#                 # Special case: walking_byte's first call with effector map skips mutation
-#                 if calls == 1 and use_eff_map and func == mutate_seq_walking_byte:
-#                     assert ham_distance(original, outdata) == 0
-#                 else:
-#                     assert ham_distance(original, outdata) == flipped_bits, \
-#                         f"Bitflips mismatch on call {calls}:\n{hexlify(original)}\n{hexlify(outdata)}"
-
-#                 return False, False
-
-#             func(irp_list, index, verifier, effector_map=eff_map, skip_null=skip_null)
-
-#             # Ensure mutation did not persist
-#             assert irp_list[index].InBuffer == original
-
-#             if not skip_null and not eff_map:
-#                 assert calls == loops * length - skips
-
-
 def test_invariants(v=False):
 
     payloads = []
     for length in [range(0, 3), 16, 23, 33]:
-        payloads.append(rand.bytes(32))  # 그대로 유지
+        payloads.append(rand.bytes(32))
 
     irp_list, _ = generate_irp_payloads(payloads)
 
@@ -254,7 +216,7 @@ def test_arith_8_call_num():
     irp_list, _ = generate_irp_payloads(payloads)
 
     for index in range(len(irp_list)):
-        loops = InBufferLength = irp_list[index].InBuffer_length
+        loops = irp_list[index].InBuffer_length
         ops = 2 * (AFL_ARITH_MAX - 1 - 6)
         expected_calls = loops * ops
         assert_func_num_calls(func, irp_list, index, expected_calls)
