@@ -1,3 +1,0 @@
-[console_scripts]
-kafl = kafl_fuzzer.__main__:main
-

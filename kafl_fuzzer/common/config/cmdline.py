@@ -24,6 +24,7 @@ from typing import Any
 from .settings import settings
 from kafl_fuzzer.manager.core import start as fuzz_start
 from kafl_fuzzer.coverage import start as cov_start
+from kafl_fuzzer.debug.core import start as debug_start
 from kafl_fuzzer.gui import start as gui_start
 from kafl_fuzzer.plot import start as plot_start
 from kafl_fuzzer.mcat import start as mcat_start
@@ -199,7 +200,7 @@ class ConfigParserBuilder():
         qemu_grp = debug_subcommand.add_argument_group('Qemu/Nyx options')
         add_args_qemu(qemu_grp)
 
-        # debug_subcommand.set_defaults(func=debug_start)
+        debug_subcommand.set_defaults(func=debug_start)
 
     def _add_cov_subcommand(self, parser: _SubParsersAction):
         cov_subcommand: ArgumentParser = parser.add_parser(KaflSubcommands.COV.name.lower(), help="kAFL Coverage Analyzer")
